@@ -1,7 +1,13 @@
 import  httpStatus  from 'http-status';
-import AppError from "../../../errors/AppError";
 import { IUser } from "./user.interface";
 import UserModel from "./user.model";
+import AppError from '../../errors/AppError';
+import configs from '../../configs';
+import { cacheData, deleteCachedData, getCachedData } from '../../utils/redis.utils';
+
+
+const redisCacheKeyPrefix = configs.redis_cache_key_prefix;
+const redisTTL = parseInt(configs.redis_ttl as string);
 
 /**
  * Creates a new user in the database.
@@ -12,6 +18,7 @@ import UserModel from "./user.model";
 const createUserService = (payload: IUser) => {
     try{
     const result = UserModel.create(payload);
+    deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -25,11 +32,21 @@ const createUserService = (payload: IUser) => {
  * @returns {Promise<IUser[]>} - A promise that resolves to an array of user objects.
  * @throws {AppError} - If there is an error retrieving users, an error with a BAD_REQUEST status is thrown.
  */
-
 const getUserService = () => {
 
     try{
+        //get cached data from the redis
+        const cachedKey = `${redisCacheKeyPrefix}:users`;
+        const cachedData = getCachedData(cachedKey);
+
+        if(cachedData){
+            return cachedData;
+        }
+
+
         const result = UserModel.find();
+        //cache the data
+        cacheData(cachedKey, result, redisTTL);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,6 +85,7 @@ const getUserByEmail = (email: string) => {
 const updateUserService = (id: string, payload: IUser) => {
     try{
         const result = UserModel.findByIdAndUpdate(id, payload, {new: true});
+        deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -86,6 +104,7 @@ const updateUserService = (id: string, payload: IUser) => {
 const deleteUserService = (id: string) => {
     try{
         const result = UserModel.findByIdAndDelete(id);
+        deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

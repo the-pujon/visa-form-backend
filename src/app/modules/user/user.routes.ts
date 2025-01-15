@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { UserController } from "./user.controllers";
-import validateRequest from "../../../middlewares/validateRequest";
 import {
   userUpdateValidationSchema,
   userValidationSchema,
 } from "./user.validation";
+import validateRequest from "../../middlewares/validateRequest";
 
 const route = Router();
 

@@ -36,8 +36,21 @@ const getUserByEmailController = catchAsync(async(req, res) => {
     })
 })
 
+const updateUserController = catchAsync(async(req, res) => {
+    const result = UserServices.updateUserService(req.params.id, req.body);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'User updated successfully',
+        data: result
+    })
+
+})
+
 export const UserController = {
     createUserController,
     getUserController,
-    getUserByEmailController
+    getUserByEmailController,
+    updateUserController
 }

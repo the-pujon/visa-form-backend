@@ -57,8 +57,29 @@ const getUserByEmail = (email: string) => {
 }
 
 
+/**
+ * Updates an existing user in the database.
+ * @param {string} id - The ID of the user to update.
+ * @param {IUser} payload - The payload to update the user with.
+ * @returns {Promise<IUser>} - A promise that resolves to the newly updated user object.
+ * @throws {AppError} - If there is an error updating the user, an error with a BAD_REQUEST status is thrown.
+ */
+
+const updateUserService = (id: string, payload: IUser) => {
+    try{
+        const result = UserModel.findByIdAndUpdate(id, payload, {new: true});
+        return result;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch(err) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Error updating user');
+    }
+}
+
+
 export const UserServices = {
     createUserService,
     getUserService,
-    getUserByEmail
+    getUserByEmail,
+    updateUserService
 }

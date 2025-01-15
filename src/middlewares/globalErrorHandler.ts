@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
 import { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
-import config from "../config";
 import AppError from "../errors/AppError";
 import handleCastError from "../errors/handleCastError";
 import handleDuplicateError from "../errors/handleDuplicateError.ts";
 import handleValidationError from "../errors/handleValidationError";
 import handleZodError from "../errors/handleZodError";
 import { TErrorSources as TErrorMessages } from "../interface/error";
+import configs from "../app/configs";
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   //setting default values
@@ -61,14 +60,14 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   }
   
 
-  return res.status(statusCode).json({
+  res.status(statusCode).json({
     success: false,
     ...(statusCode === 404 || statusCode === 401 ? { statusCode } : null),
     message,
     ...(statusCode !== 404 && statusCode !== 401 && { errorMessages }),
     ...(statusCode !== 404 &&
       statusCode !== 401 &&
-      config.NODE_ENV === "development" && { stack: err?.stack }),
+      configs.NODE_ENV === "development" && { stack: err?.stack }),
   });
 };
 

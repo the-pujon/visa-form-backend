@@ -19,7 +19,7 @@ const createUserService =async (payload: IUser) => {
     try{
     const result = await UserModel.create(payload);
     console.log(result);
-    deleteCachedData(`${redisCacheKeyPrefix}:users`);
+   await deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -38,16 +38,17 @@ const getUserService = async () => {
     try{
         //get cached data from the redis
         const cachedKey = `${redisCacheKeyPrefix}:users`;
-        const cachedData = getCachedData(cachedKey);
+        const cachedData = await getCachedData(cachedKey);
+
+        // console.log(cachedData);
 
         if(cachedData){
             return cachedData;
         }
 
-
         const result =await UserModel.find();
         //cache the data
-        cacheData(cachedKey, result, redisTTL);
+       await cacheData(cachedKey, result, redisTTL);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -86,7 +87,7 @@ const getUserByEmail = async (email: string) => {
 const updateUserService =async (id: string, payload: IUser) => {
     try{
         const result =await UserModel.findByIdAndUpdate(id, payload, {new: true});
-        deleteCachedData(`${redisCacheKeyPrefix}:users`);
+      await  deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -105,7 +106,7 @@ const updateUserService =async (id: string, payload: IUser) => {
 const deleteUserService = async (id: string) => {
     try{
         const result = await UserModel.findByIdAndDelete(id);
-        deleteCachedData(`${redisCacheKeyPrefix}:users`);
+       await deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

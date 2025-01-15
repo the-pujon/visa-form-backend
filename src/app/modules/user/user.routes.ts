@@ -13,7 +13,7 @@ route.post(
   validateRequest(userValidationSchema),
   UserController.createUserController,
 );
-route.get("/get", UserController.getUserController);
+route.get("/", UserController.getUserController);
 route.get("/:email", UserController.getUserByEmailController);
 route.put(
   "/:id",

@@ -25,7 +25,19 @@ const getUserController = catchAsync(async(req, res) => {
     })
 })
 
+const getUserByEmailController = catchAsync(async(req, res) => {
+    const result = UserServices.getUserByEmail(req.params.email);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'User fetched successfully',
+        data: result
+    })
+})
+
 export const UserController = {
     createUserController,
-    getUserController
+    getUserController,
+    getUserByEmailController
 }

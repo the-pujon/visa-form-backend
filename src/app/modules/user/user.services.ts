@@ -15,9 +15,10 @@ const redisTTL = parseInt(configs.redis_ttl as string);
  * @returns {Promise<IUser>} - A promise that resolves to the newly created user object.
  * @throws {AppError} - If there is an error creating the user, an error with a BAD_REQUEST status is thrown.
  */
-const createUserService = (payload: IUser) => {
+const createUserService =async (payload: IUser) => {
     try{
-    const result = UserModel.create(payload);
+    const result = await UserModel.create(payload);
+    console.log(result);
     deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }
@@ -32,7 +33,7 @@ const createUserService = (payload: IUser) => {
  * @returns {Promise<IUser[]>} - A promise that resolves to an array of user objects.
  * @throws {AppError} - If there is an error retrieving users, an error with a BAD_REQUEST status is thrown.
  */
-const getUserService = () => {
+const getUserService = async () => {
 
     try{
         //get cached data from the redis
@@ -44,7 +45,7 @@ const getUserService = () => {
         }
 
 
-        const result = UserModel.find();
+        const result =await UserModel.find();
         //cache the data
         cacheData(cachedKey, result, redisTTL);
         return result;
@@ -61,10 +62,10 @@ const getUserService = () => {
  * @returns {Promise<IUser>} - The user object
  * @throws {AppError} - If there is an error getting the user
  */
-const getUserByEmail = (email: string) => {
+const getUserByEmail = async (email: string) => {
 
     try{
-        const result = UserModel.findOne({email});
+        const result = await UserModel.findOne({email});
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -82,9 +83,9 @@ const getUserByEmail = (email: string) => {
  * @throws {AppError} - If there is an error updating the user, an error with a BAD_REQUEST status is thrown.
  */
 
-const updateUserService = (id: string, payload: IUser) => {
+const updateUserService =async (id: string, payload: IUser) => {
     try{
-        const result = UserModel.findByIdAndUpdate(id, payload, {new: true});
+        const result =await UserModel.findByIdAndUpdate(id, payload, {new: true});
         deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }
@@ -101,9 +102,9 @@ const updateUserService = (id: string, payload: IUser) => {
  * @throws {AppError} - If there is an error deleting the user, an error with a BAD_REQUEST status is thrown.
  */
 
-const deleteUserService = (id: string) => {
+const deleteUserService = async (id: string) => {
     try{
-        const result = UserModel.findByIdAndDelete(id);
+        const result = await UserModel.findByIdAndDelete(id);
         deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }

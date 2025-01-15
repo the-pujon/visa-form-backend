@@ -9,7 +9,7 @@ import validateRequest from "../../middlewares/validateRequest";
 const route = Router();
 
 route.post(
-  "/create",
+  "/",
   validateRequest(userValidationSchema),
   UserController.createUserController,
 );

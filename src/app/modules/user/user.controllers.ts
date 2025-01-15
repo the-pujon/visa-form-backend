@@ -4,6 +4,7 @@ import catchAsync from "../../utils/catchAsync.";
 import sendResponse from "../../utils/sendResponse";
 
 const createUserController = catchAsync(async(req, res) => {
+    console.log(req.body);
     const result = UserServices.createUserService(req.body);
 
     sendResponse(res, {

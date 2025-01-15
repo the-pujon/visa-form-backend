@@ -76,10 +76,29 @@ const updateUserService = (id: string, payload: IUser) => {
     }
 }
 
+/**
+ * Deletes an existing user from the database.
+ * @param {string} id - The ID of the user to delete.
+ * @returns {Promise<IUser>} - A promise that resolves to the deleted user object.
+ * @throws {AppError} - If there is an error deleting the user, an error with a BAD_REQUEST status is thrown.
+ */
+
+const deleteUserService = (id: string) => {
+    try{
+        const result = UserModel.findByIdAndDelete(id);
+        return result;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch(err) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Error deleting user');
+    }
+}
+
 
 export const UserServices = {
     createUserService,
     getUserService,
     getUserByEmail,
-    updateUserService
+    updateUserService,
+    deleteUserService
 }

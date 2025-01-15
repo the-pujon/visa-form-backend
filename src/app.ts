@@ -1,6 +1,7 @@
 import cors  from 'cors';
 // import { express } from 'express';
 import express, { Application, Request, Response } from 'express';
+import router from './app/routes';
 
 const app: Application = express();
 
@@ -11,8 +12,8 @@ app.use(
     credentials: true,
   }),
 );
-
-app.get('/api/v1', (req: Request, res: Response) => {
+app.use("/api", router);
+app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!');
 });
 

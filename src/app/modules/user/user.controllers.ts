@@ -5,7 +5,7 @@ import sendResponse from "../../utils/sendResponse";
 
 const createUserController = catchAsync(async(req, res) => {
     console.log(req.body);
-    const result = UserServices.createUserService(req.body);
+    const result = await UserServices.createUserService(req.body);
 
     sendResponse(res, {
         statusCode: httpStatus.CREATED,
@@ -16,7 +16,7 @@ const createUserController = catchAsync(async(req, res) => {
 })
 
 const getUserController = catchAsync(async(req, res) => {
-    const result = UserServices.getUserService();
+    const result = await UserServices.getUserService();
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -27,7 +27,7 @@ const getUserController = catchAsync(async(req, res) => {
 })
 
 const getUserByEmailController = catchAsync(async(req, res) => {
-    const result = UserServices.getUserByEmail(req.params.email);
+    const result = await UserServices.getUserByEmail(req.params.email);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -38,7 +38,7 @@ const getUserByEmailController = catchAsync(async(req, res) => {
 })
 
 const updateUserController = catchAsync(async(req, res) => {
-    const result = UserServices.updateUserService(req.params.id, req.body);
+    const result =await UserServices.updateUserService(req.params.id, req.body);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -50,7 +50,7 @@ const updateUserController = catchAsync(async(req, res) => {
 })
 
 const deleteUserController = catchAsync(async(req, res) => {
-    const result = UserServices.deleteUserService(req.params.id);
+    const result = await UserServices.deleteUserService(req.params.id);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,

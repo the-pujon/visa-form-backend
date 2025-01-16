@@ -10,13 +10,14 @@ const createUserController = catchAsync(async(req, res) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const img: any = await cloudinaryUpload(req?.file?.filename as string, req?.file?.path as string);
     req.body.image = img.secure_url;
+    req.body.imageId = img.public_id;
 
-    const result = await UserServices.createUserService(req.body);
+    // const result = await UserServices.createUserService(req.body);
     sendResponse(res, {
         statusCode: httpStatus.CREATED,
         success: true,
         message: 'User created successfully',
-        data: result
+        data: null
     })
 })
 

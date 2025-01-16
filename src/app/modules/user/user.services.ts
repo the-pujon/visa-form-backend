@@ -24,6 +24,7 @@ const createUserService =async (payload: IUser) => {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     catch(err) {
+        console.log(err)
         throw new AppError(httpStatus.BAD_REQUEST, 'Error creating user');
     }
 }
@@ -67,6 +68,27 @@ const getUserByEmail = async (email: string) => {
 
     try{
         const result = await UserModel.findOne({email});
+        return result;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch(err) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Error getting user');
+    }
+}
+
+
+
+/**
+ * Retrieves a user by their ID from the database.
+ * @param {string} id - The ID of the user to retrieve.
+ * @returns {Promise<IUser>} - A promise that resolves to the user object if found.
+ * @throws {AppError} - If there is an error retrieving the user, an error with a BAD_REQUEST status is thrown.
+ */
+
+const getUserById = async (id: string) => {
+
+    try{
+        const result = await UserModel.findById(id);
         return result;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -121,5 +143,6 @@ export const UserServices = {
     getUserService,
     getUserByEmail,
     updateUserService,
-    deleteUserService
+    deleteUserService,
+    getUserById
 }

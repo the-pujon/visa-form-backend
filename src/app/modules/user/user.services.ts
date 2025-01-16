@@ -18,7 +18,7 @@ const redisTTL = parseInt(configs.redis_ttl as string);
 const createUserService =async (payload: IUser) => {
     try{
     const result = await UserModel.create(payload);
-    console.log(result);
+    // console.log(result);
    await deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }

@@ -106,18 +106,33 @@ const getUserById = async (id: string) => {
  * @throws {AppError} - If there is an error updating the user, an error with a BAD_REQUEST status is thrown.
  */
 
-const updateUserService =async (id: string, payload: IUser) => {
-    try{
-        const result =await UserModel.findByIdAndUpdate(id, payload, {new: true});
-      await  deleteCachedData(`${redisCacheKeyPrefix}:users`);
-        return result;
+const updateUserService = async (id: string, payload: Partial<IUser>) => {
+    try {
+      // Update the user with the fields provided in the payload
+      const result = await UserModel.findByIdAndUpdate(id, payload, {
+        new: true, // Return the updated document
+        runValidators: true, // Ensure schema validations are applied
+      });
+  
+      if (!result) {
+        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+      }
+  
+      // Invalidate the cache for users
+      await deleteCachedData(`${redisCacheKeyPrefix}:users`);
+  
+      return result;
+    } catch (err) {
+      // Log the error for debugging purposes
+      console.error('Error updating user:', err);
+  
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Error updating user, please check the input data'
+      );
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    catch(err) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Error updating user');
-    }
-}
-
+  };
+  
 /**
  * Deletes an existing user from the database.
  * @param {string} id - The ID of the user to delete.

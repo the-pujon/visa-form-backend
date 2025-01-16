@@ -25,9 +25,15 @@ route.get("/", UserController.getUserController);
 route.get("/:email", UserController.getUserByEmailController);
 route.put(
   "/:id",
+  uploadAndCompress,
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = JSON.parse(req.body.data);
+    next();
+  },
   validateRequest(userUpdateValidationSchema),
   UserController.updateUserController,
 );
 route.delete("/:id", UserController.deleteUserController);
+route.get("/id/:id", UserController.getUserByIdController);
 
 export const userRoute = route;

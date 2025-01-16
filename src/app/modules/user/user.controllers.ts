@@ -4,6 +4,7 @@ import { UserServices } from "./user.services";
 import catchAsync from "../../utils/catchAsync.";
 import sendResponse from "../../utils/sendResponse";
 import { cloudinaryUpload } from '../../utils/cloudinaryUpload';
+import AppError from '../../errors/AppError';
 
 const createUserController = catchAsync(async(req, res) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,17 +53,35 @@ const getUserByIdController = catchAsync(async(req, res) => {
     })
 })
 
-const updateUserController = catchAsync(async(req, res) => {
-    const result =await UserServices.updateUserService(req.params.id, req.body);
-
+const updateUserController = catchAsync(async (req, res) => {
+    const { id } = req.params; // Assuming the ID is passed in params
+  
+    // Handle optional image upload
+    if (req.file) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const img: any = await cloudinaryUpload(
+        req.file.filename as string,
+        req.file.path as string
+      );
+      req.body.image = img.secure_url;
+    }
+  
+    // Call the update service
+    const updatedUser = await UserServices.updateUserService(id, req.body);
+  
+    if (!updatedUser) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+  
+    // Send response
     sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'User updated successfully',
-        data: result
-    })
-
-})
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User updated successfully",
+      data: updatedUser,
+    });
+  });
+  
 
 const deleteUserController = catchAsync(async(req, res) => {
     const result = await UserServices.deleteUserService(req.params.id);

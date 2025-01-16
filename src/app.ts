@@ -12,6 +12,7 @@ app.use(
     credentials: true,
   }),
 );
+//start 
 app.use("/api", router);
 app.get('/api', (req: Request, res: Response) => {
     res.send('Hello World!');

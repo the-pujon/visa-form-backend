@@ -12,7 +12,14 @@ const userSchema = new Schema<IUser>({
   role: { type: String, required: false, default: 'user', enum: ['user', 'admin'] },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  address: { type: String, required: true }
+  address: { type: String, required: true },
+  image: { type: String, required: false },
+  active: { type: Boolean, default: true },
+  languages: { type: [String], default: [] },
+  phone: { type: String },
+  birthdate: { type: Date },
+  gender: { type: String, enum: ['male', 'female', 'other'], required: false },
+  portrait: { type: String },
 });
 
 

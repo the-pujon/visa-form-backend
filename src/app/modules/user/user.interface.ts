@@ -9,6 +9,13 @@ export interface IUser {
     createdAt?: Date;
     updatedAt?: Date;
     address: string;
+    image?: string;
+    active?: boolean;
+    languages?: string[];
+    phone?: string;
+    birthdate?: Date;
+    gender?: 'male' | 'female' | 'other';
+    portrait?: URL;
 }
 
 

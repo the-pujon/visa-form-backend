@@ -57,16 +57,6 @@ const getUserByIdController = catchAsync(async(req, res) => {
 const updateUserController = catchAsync(async (req, res) => {
     const { id } = req.params; // Assuming the ID is passed in params
   
-    // Handle optional image upload
-    if (req.file) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const img: any = await cloudinaryUpload(
-        req.file.filename as string,
-        req.file.path as string
-      );
-      req.body.image = img.secure_url;
-    }
-  
     // Call the update service
     const updatedUser = await UserServices.updateUserService(id, req.body, req.file);
   

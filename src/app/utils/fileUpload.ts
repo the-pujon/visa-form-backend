@@ -30,7 +30,9 @@ export const uploadAndCompress = (req: Request, res: Response, next: NextFunctio
     }
 
     if (!req.file) {
-      return next(new Error("No file uploaded"));
+      // return next(new Error("No file uploaded"));
+      next()
+      return null
     }
 
     try {

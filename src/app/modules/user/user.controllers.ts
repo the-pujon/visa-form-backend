@@ -68,7 +68,7 @@ const updateUserController = catchAsync(async (req, res) => {
     }
   
     // Call the update service
-    const updatedUser = await UserServices.updateUserService(id, req.body);
+    const updatedUser = await UserServices.updateUserService(id, req.body, req.file);
   
     if (!updatedUser) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found");

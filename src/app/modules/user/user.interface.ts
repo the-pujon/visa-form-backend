@@ -16,6 +16,7 @@ export interface IUser {
     birthdate?: Date;
     gender?: 'male' | 'female' | 'other';
     portrait?: URL;
+    imageId?: string
 }
 
 

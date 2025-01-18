@@ -20,6 +20,7 @@ const userSchema = new Schema<IUser>({
   birthdate: { type: Date },
   gender: { type: String, enum: ['male', 'female', 'other'], required: false },
   portrait: { type: String },
+  imageId: {type: String}
 });
 
 

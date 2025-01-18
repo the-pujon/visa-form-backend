@@ -4,6 +4,7 @@ import UserModel from "./user.model";
 import AppError from '../../errors/AppError';
 import configs from '../../configs';
 import { cacheData, deleteCachedData, getCachedData } from '../../utils/redis.utils';
+import { cloudinaryUpload } from '../../utils/cloudinaryUpload';
 
 
 const redisCacheKeyPrefix = configs.redis_cache_key_prefix;
@@ -106,13 +107,24 @@ const getUserById = async (id: string) => {
  * @throws {AppError} - If there is an error updating the user, an error with a BAD_REQUEST status is thrown.
  */
 
-const updateUserService = async (id: string, payload: Partial<IUser>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateUserService = async (id: string, payload: Partial<IUser>, file: any) => {
     try {
       // Update the user with the fields provided in the payload
       const result = await UserModel.findByIdAndUpdate(id, payload, {
         new: true, // Return the updated document
         runValidators: true, // Ensure schema validations are applied
       });
+
+      if(file){
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const img: any = await cloudinaryUpload(
+                result?.imageId as string,
+                file.path as string
+              );
+              payload.image = img.secure_url;
+            //   payload.imageId = result?.imageId;
+      }
   
       if (!result) {
         throw new AppError(httpStatus.NOT_FOUND, 'User not found');

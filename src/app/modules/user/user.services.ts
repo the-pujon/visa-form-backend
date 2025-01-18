@@ -5,6 +5,7 @@ import AppError from '../../errors/AppError';
 import configs from '../../configs';
 import { cacheData, deleteCachedData, getCachedData } from '../../utils/redis.utils';
 import { cloudinaryUpload } from '../../utils/cloudinaryUpload';
+import { cloudinaryDestroy } from '../../utils/cloudinaryDelete';
 
 
 const redisCacheKeyPrefix = configs.redis_cache_key_prefix;
@@ -155,6 +156,7 @@ const updateUserService = async (id: string, payload: Partial<IUser>, file: any)
 const deleteUserService = async (id: string) => {
     try{
         const result = await UserModel.findByIdAndDelete(id);
+        await cloudinaryDestroy(result?.imageId as string)
        await deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }

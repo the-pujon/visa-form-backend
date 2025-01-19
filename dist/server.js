@@ -21,13 +21,13 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield mongoose_1.default.connect(configs_1.default.database_url);
-            console.log("Successfully connected to the database");
-            server = app_1.default.listen(configs_1.default.port || 3000, () => {
-                console.log(`Server is running on http://localhost:${configs_1.default.port || 3000}`);
+            console.log("Database connected successfully");
+            server = app_1.default.listen(configs_1.default.port, () => {
+                console.log(`Server is running on port ${configs_1.default.port}`);
             });
         }
         catch (err) {
-            console.log(err);
+            console.error('Failed to connect database', err);
         }
     });
 }

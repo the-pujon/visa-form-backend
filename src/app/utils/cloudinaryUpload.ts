@@ -23,10 +23,10 @@ export const cloudinaryUpload = (imageName: string, path: string) => {
           // console.log("Upload successful")
           //   console.log(result)
 
-          fs.unlink(path, (err) => {
-            if (err) throw err;
-            // console.log('File deleted!');
-          });
+          // fs.unlink(path, (err) => {
+          //   if (err) throw err;
+          //   // console.log('File deleted!');
+          // });
         }
       },
     );

@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cloudinaryUpload = void 0;
 const cloudinary_1 = require("cloudinary");
-const fs_1 = __importDefault(require("fs"));
 const configs_1 = __importDefault(require("../configs"));
 cloudinary_1.v2.config({
     cloud_name: configs_1.default.cloud_name,
@@ -24,11 +23,10 @@ const cloudinaryUpload = (imageName, path) => {
                 resolve(result);
                 // console.log("Upload successful")
                 //   console.log(result)
-                fs_1.default.unlink(path, (err) => {
-                    if (err)
-                        throw err;
-                    // console.log('File deleted!');
-                });
+                // fs.unlink(path, (err) => {
+                //   if (err) throw err;
+                //   // console.log('File deleted!');
+                // });
             }
         });
     });

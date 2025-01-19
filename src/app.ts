@@ -17,7 +17,7 @@ app.use(
 );
 //start 
 app.use("/api", router);
-app.get('/api', (req: Request, res: Response) => {
+app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!');
 });
 const notFoundRouteHandler = (

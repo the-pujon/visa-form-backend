@@ -16,14 +16,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const app_1 = __importDefault(require("./app"));
 const configs_1 = __importDefault(require("./app/configs"));
-const port = configs_1.default.port || 3000;
+let server;
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield mongoose_1.default.connect(configs_1.default.database_url);
             console.log("Successfully connected to the database");
-            app_1.default.listen(port, () => {
-                console.log(`Server is running on http://localhost:${port}`);
+            server = app_1.default.listen(configs_1.default.port || 3000, () => {
+                console.log(`Server is running on http://localhost:${configs_1.default.port || 3000}`);
             });
         }
         catch (err) {
@@ -32,3 +32,18 @@ function main() {
     });
 }
 main();
+// Export the server and app for Vercel
+exports.default = app_1.default;
+// Handle unhandled rejections
+process.on('unhandledRejection', (err) => {
+    console.log('Unhandled Rejection. Shutting down...');
+    console.log(err);
+    if (server) {
+        server.close(() => {
+            process.exit(1);
+        });
+    }
+    else {
+        process.exit(1);
+    }
+});

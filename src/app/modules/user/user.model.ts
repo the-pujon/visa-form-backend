@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IUser } from './user.interface';
+import { IUser, UserStaticMethods } from './user.interface';
 import bcrypt from "bcrypt";
 import configs from '../../configs';
 
@@ -41,10 +41,10 @@ userSchema.post("save", function (doc, next) {
     next();
   });
 
-//Static method to check if user exist with given email
-  userSchema.statics.isUserExist = async function (email: string) {
-    return await UserModel.findOne({ email }).select("+password");
-  };
+// Static method to check if user exists with a given email
+userSchema.statics.isUserExist = async function (email: string) {
+  return await this.findOne({ email }).select("+password");
+};
 
   //static method for compare password
 userSchema.statics.isPasswordMatch = async function (
@@ -55,9 +55,7 @@ userSchema.statics.isPasswordMatch = async function (
   };
   
   
-
-
   // Create Mongoose model based on schema
-const UserModel = mongoose.model<IUser>('User', userSchema);
+const UserModel = mongoose.model<IUser, UserStaticMethods>('User', userSchema);
 
 export default UserModel;

@@ -7,9 +7,11 @@ import jwt, {
   JwtPayload,
   TokenExpiredError,
 } from "jsonwebtoken";
-import config from "../config";
-import { UserModel } from "../modules/auth/auth.model";
+// import config from "../config";
+// import { UserModel } from "../modules/auth/auth.model";
 import { getCachedData } from "../utils/redis.utils";
+import UserModel from "../modules/user/user.model";
+import configs from "../configs";
 
 export const auth = (...requiredRoles: ("admin" | "user")[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -23,7 +25,7 @@ export const auth = (...requiredRoles: ("admin" | "user")[]) => {
     }
 
     try {
-      const decoded = jwt.verify(token, config.jwt_access_secret as string);
+      const decoded = jwt.verify(token, configs.jwt_access_secret as string);
 
       const { email, role } = decoded as JwtPayload;
 

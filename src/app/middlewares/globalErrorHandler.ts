@@ -7,7 +7,8 @@ import handleDuplicateError from "../errors/handleDuplicateError.ts";
 import handleValidationError from "../errors/handleValidationError";
 import handleZodError from "../errors/handleZodError";
 import { TErrorSources as TErrorMessages } from "../interface/error";
-import configs from "../app/configs";
+import configs from "../configs";
+// import configs from "../app/configs";
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   //setting default values

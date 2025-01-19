@@ -3,9 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable no-console */
 const redis_1 = require("redis");
 const redisClient = (0, redis_1.createClient)({
-    url: process.env.REDIS_URL,
+    // url: process.env.REDIS_HOST,
+    username: 'default',
     password: process.env.REDIS_PASSWORD,
     socket: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT),
         reconnectStrategy: (retries) => {
             if (retries >= 3) {
                 return new Error("Failed to connect to Redis");

@@ -20,7 +20,7 @@ const redisTTL = parseInt(configs.redis_ttl as string);
 const createUserService =async (payload: IUser) => {
     try{
     const result = await UserModel.create(payload);
-    // console.log(result);
+    console.log(result);
    await deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }
@@ -111,21 +111,26 @@ const getUserById = async (id: string) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateUserService = async (id: string, payload: Partial<IUser>, file: any) => {
     try {
+    const existingUsers = await UserModel.findById(id);
+
+    if(file){
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const img: any = await cloudinaryUpload(
+           existingUsers?.imageId as string,
+           file.path as string
+         );
+         payload.image = img.secure_url;
+ }
+
+
       // Update the user with the fields provided in the payload
       const result = await UserModel.findByIdAndUpdate(id, payload, {
         new: true, // Return the updated document
         runValidators: true, // Ensure schema validations are applied
       });
 
-      if(file){
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-         const img: any = await cloudinaryUpload(
-                result?.imageId as string,
-                file.path as string
-              );
-              payload.image = img.secure_url;
-            //   payload.imageId = result?.imageId;
-      }
+    
+    //   console.log(payload)
   
       if (!result) {
         throw new AppError(httpStatus.NOT_FOUND, 'User not found');
@@ -156,7 +161,9 @@ const updateUserService = async (id: string, payload: Partial<IUser>, file: any)
 const deleteUserService = async (id: string) => {
     try{
         const result = await UserModel.findByIdAndDelete(id);
-        await cloudinaryDestroy(result?.imageId as string)
+        if(result?.imageId){
+            await cloudinaryDestroy(result?.imageId as string)
+        }
        await deleteCachedData(`${redisCacheKeyPrefix}:users`);
         return result;
     }

@@ -20,6 +20,11 @@ app.use("/api", router);
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!');
 });
+
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
 const notFoundRouteHandler = (
   req: Request,
   res: Response,

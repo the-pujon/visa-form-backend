@@ -3,7 +3,7 @@ services:
     name: crud-management-backend
     env: node
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: node index.js
     envVars:
       - key: NODE_ENV
         value: production 

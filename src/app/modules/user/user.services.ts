@@ -20,12 +20,12 @@ const redisTTL = parseInt(configs.redis_ttl as string);
 const createUserService =async (payload: IUser) => {
     try{
     const result = await UserModel.create(payload);
-    console.log(result);
    await deleteCachedData(`${redisCacheKeyPrefix}:users`);
     return result;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     catch(err) {
+        
+        // eslint-disable-next-line no-console
         console.log(err)
         throw new AppError(httpStatus.BAD_REQUEST, 'Error creating user');
     }
@@ -142,6 +142,7 @@ const updateUserService = async (id: string, payload: Partial<IUser>, file: any)
       return result;
     } catch (err) {
       // Log the error for debugging purposes
+      // eslint-disable-next-line no-console
       console.error('Error updating user:', err);
   
       throw new AppError(

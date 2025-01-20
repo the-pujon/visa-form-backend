@@ -7,7 +7,7 @@ import { cloudinaryUpload } from '../../utils/cloudinaryUpload';
 import AppError from '../../errors/AppError';
 
 const createUserController = catchAsync(async(req, res) => {
-    console.log("here")
+    // console.log("here")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const img: any = await cloudinaryUpload(req?.file?.filename as string, req?.file?.path as string);
     req.body.image = img.secure_url;

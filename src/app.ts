@@ -1,42 +1,49 @@
-import  httpStatus  from 'http-status';
-import cors  from 'cors';
-// import { express } from 'express';
 import express, { Application, NextFunction, Request, Response } from 'express';
+import cors from 'cors';
+import httpStatus from 'http-status';
 import router from './app/routes';
-// import notFoundRouteHandler from './app/middlewares/notFoundRouteHandler';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
+import fs from 'fs';
+import path from 'path';
 
 const app: Application = express();
 
-app.use(express.json());
+// Parse URL-encoded bodies (as sent by HTML forms)
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Parse JSON bodies (as sent by API clients)
+app.use(express.json({ limit: '50mb' }));
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL as string,
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
-  }),
+  })
 );
-//start 
-app.use("/api", router);
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World!');
-});
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+app.use("/api", router);
+
+// Health check route
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
-const notFoundRouteHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// Not found handler
+const notFoundRouteHandler = (req: Request, res: Response, next: NextFunction) => {
   res.status(httpStatus.NOT_FOUND).json({
     success: false,
     statusCode: httpStatus.NOT_FOUND,
     message: "Not Found",
   });
-  next(); // Add this line to call the next middleware
+  next();
 };
+
 app.use(notFoundRouteHandler);
 app.use(globalErrorHandler);
 

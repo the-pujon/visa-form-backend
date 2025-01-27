@@ -10,7 +10,7 @@ const createVisaApplication = async (payload: IVisaForm) => {
     // console.log("Payload:", payload);
   try {
     const result = await VisaModel.create(payload);
-    console.log("Result:", result);
+    // console.log("Result:", result);
     return result;
   } catch (error) {
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to create visa application");

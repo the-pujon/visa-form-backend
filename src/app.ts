@@ -14,12 +14,24 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Parse JSON bodies (as sent by API clients)
 app.use(express.json({ limit: '50mb' }));
 
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL || 'http://localhost:3000' || 'http://192.168.68.150:3000',
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3000', 
+      'http://192.168.68.150:3000', 
+      'http://localhost:3000'
+    ],
     credentials: true,
   })
 );
+
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'uploads');

@@ -14,32 +14,12 @@ interface UploadedFiles {
 
 const createVisaApplication = catchAsync(async (req: Request & { processedFiles?: ProcessedFiles }, res: Response, next: NextFunction) => {
   try {
-    // console.log("Request headers:", req.headers);
-    // console.log("Raw request body:", req.body);
-    // console.log("Request files:", req.processedFiles);
 
     if (!req.processedFiles || Object.keys(req.processedFiles).length === 0) {
       throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
     }
 
-    let visaData;
-    try {
-      // Check if data is already parsed
-      if (typeof req.body.data === 'string') {
-        visaData = JSON.parse(req.body.data);
-      } else {
-        visaData = req.body.data;
-      }
-      
-      if (!visaData) {
-        throw new Error('No data found in request');
-      }
-
-      console.log("Parsed Visa Data:", visaData);
-    } catch (error) {
-      console.error("JSON Parse Error:", error);
-      throw new AppError(httpStatus.BAD_REQUEST, "Invalid form data format");
-    }
+    const visaData = req.body;
 
     const uploadedFiles: UploadedFiles = {};
 
@@ -61,8 +41,6 @@ const createVisaApplication = catchAsync(async (req: Request & { processedFiles?
         }
       }
     }
-
-    console.log("Uploaded Files:", uploadedFiles);
 
     // Create the final visa application data with proper document organization
     const visaApplicationData = {
@@ -89,8 +67,6 @@ const createVisaApplication = catchAsync(async (req: Request & { processedFiles?
       }
     });
 
-    console.log("Final Visa Application Data:", visaApplicationData);
-
     const result = await VisaServices.createVisaApplication(visaApplicationData);
 
     sendResponse(res, {
@@ -100,7 +76,6 @@ const createVisaApplication = catchAsync(async (req: Request & { processedFiles?
       data: result,
     });
   } catch (error) {
-    console.error("Controller Error:", error);
     next(error);
   }
 });

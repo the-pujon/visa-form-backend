@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { VisaController } from "./visa.controllers";
 import { handleMultipleFiles } from "../../utils/fileUpload";
 import validateRequest from "../../middlewares/validateRequest";
@@ -43,6 +43,10 @@ const uploadFields = [
 router.post(
   "/create",
   handleMultipleFiles(uploadFields),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = JSON.parse(req.body.data);
+    next();
+  },
   validateRequest(visaValidationSchema),
   VisaController.createVisaApplication
 );

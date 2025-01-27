@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-// import fs from "fs";
+import fs from "fs";
 import configs from "../configs";
 
 cloudinary.config({
@@ -13,7 +13,14 @@ export const cloudinaryUpload = (imageName: string, path: string) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload(
       path,
-      { public_id: imageName },
+      { public_id: imageName,
+        transformation: [
+          {
+            quality: "auto", // Adjusts quality based on the image's content.
+            fetch_format: "auto", // Ensures the most optimal format (e.g., WebP).
+          },
+        ],
+       },
       (err, result) => {
         if (err) {
           // console.error("error uploading image", err)
@@ -23,10 +30,10 @@ export const cloudinaryUpload = (imageName: string, path: string) => {
           // console.log("Upload successful")
           //   console.log(result)
 
-          // fs.unlink(path, (err) => {
-          //   if (err) throw err;
-          //   // console.log('File deleted!');
-          // });
+          fs.unlink(path, (err) => {
+            if (err) throw err;
+            console.log('File deleted!');
+          });
         }
       },
     );

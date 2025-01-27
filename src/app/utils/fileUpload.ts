@@ -123,8 +123,9 @@ const processUploadedFiles = async (files: Express.Multer.File[]): Promise<Proce
 
       await sharp(file.path)
         .resize(1200)
-        .jpeg({ quality: 80 })
+        .jpeg({ quality: 100 })
         .toFile(compressedFilePath);
+      // fs.copyFileSync(file.path, compressedFilePath);
 
       fs.unlinkSync(file.path);
       processedFile.path = compressedFilePath;

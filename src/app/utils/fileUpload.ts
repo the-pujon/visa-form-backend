@@ -6,7 +6,7 @@ import { NextFunction, Request, Response } from "express";
 import AppError from "../errors/AppError";
 import httpStatus from "http-status";
 import { ProcessedFile, ProcessedFiles } from '../interfaces/fileUpload';
-import { compressPdf } from './pdfCopressor';
+import { compressPdf } from './pdfComressor';
 
 // Configure multer upload with increased size limits
 const upload = multer({

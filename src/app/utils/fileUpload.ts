@@ -75,20 +75,20 @@ import { compressPdf } from './pdfCopressor';
 // type FileCategory = 'image' | 'document' | 'video';
 
 // Create storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const folderPath = path.join(process.cwd(), "uploads", "documents");
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-    cb(null, folderPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const fileExtension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     const folderPath = path.join(process.cwd(), "uploads", "documents");
+//     if (!fs.existsSync(folderPath)) {
+//       fs.mkdirSync(folderPath, { recursive: true });
+//     }
+//     cb(null, folderPath);
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+//     const fileExtension = path.extname(file.originalname);
+//     cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
+//   },
+// });
 
 // Configure multer upload with increased size limits
 const upload = multer({

@@ -1,27 +1,29 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import httpStatus from "http-status";
-import { IVisaForm } from "./visa.interface";
-// import { VisaModel } from "./visa.model";
 import AppError from "../../errors/AppError";
 import { cloudinaryDestroy } from "../../utils/cloudinaryDelete";
 import VisaModel from "./visa.model";
+import { ProcessedFiles } from "../../interfaces/fileUpload";
+import { prepareVisaApplicationData, processAndUploadFiles } from "./visa.utils";
 
-const createVisaApplication = async (payload: IVisaForm) => {
-    // console.log("Payload:", payload);
-  try {
-    const result = await VisaModel.create(payload);
-    // console.log("Result:", result);
-    return result;
-  } catch (error) {
-    console.log("Error:", error);
-    throw new AppError(httpStatus.BAD_REQUEST, "Failed to create visa application");
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createVisaApplication = async (visaData: any, processedFiles: ProcessedFiles) => {
+  if (!processedFiles || Object.keys(processedFiles).length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
   }
+
+  const uploadedFiles = await processAndUploadFiles(processedFiles);
+  const visaApplicationData = prepareVisaApplicationData(visaData, uploadedFiles);
+  
+  const result = await VisaModel.create(visaApplicationData);
+  return result;
 };
 
 const getVisaApplications = async () => {
   try {
     const result = await VisaModel.find();
     return result;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to retrieve visa applications");
   }
@@ -34,6 +36,7 @@ const getVisaApplicationById = async (id: string) => {
       throw new AppError(httpStatus.NOT_FOUND, "Visa application not found");
     }
     return result;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -66,6 +69,7 @@ const deleteVisaApplication = async (id: string) => {
 
     const result = await VisaModel.findByIdAndDelete(id);
     return result;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     throw new AppError(
       httpStatus.BAD_REQUEST,

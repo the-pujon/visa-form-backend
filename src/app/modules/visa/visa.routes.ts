@@ -47,7 +47,7 @@ router.post(
   "/create",
   handleMultipleFiles(getUploadFields()),
   (req: Request, res: Response, next: NextFunction) => {
-    console.log("Request Body:", req.body);
+    // console.log("Request Body:", req.body);
     try {
       if (typeof req.body.data === 'string') {
         req.body = JSON.parse(req.body.data);

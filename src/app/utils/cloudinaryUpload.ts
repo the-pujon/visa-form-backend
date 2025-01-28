@@ -9,18 +9,23 @@ cloudinary.config({
 });
 
 export const cloudinaryUpload = (imageName: string, path: string) => {
-  // console.log("uploading image")
+  const fileExtension = path.split('.').pop()?.toLowerCase();
+  const uploadOptions = {
+    public_id: imageName,
+    ...(fileExtension === 'pdf' ? {
+      resource_type: 'raw' as const,
+      format: 'pdf'
+    } : {
+      transformation: [{
+        quality: 'auto',
+      }]
+    })
+  };
+
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload(
       path,
-      { public_id: imageName,
-        transformation: [
-          {
-            quality: "auto", // Adjusts quality based on the image's content.
-            fetch_format: "auto", // Ensures the most optimal format (e.g., WebP).
-          },
-        ],
-       },
+      uploadOptions,
       (err, result) => {
         if (err) {
           // console.error("error uploading image", err)

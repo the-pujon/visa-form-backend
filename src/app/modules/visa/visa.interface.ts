@@ -53,5 +53,6 @@ export interface IFile {
     studentDocuments?: IStudentDocuments;
     jobHolderDocuments?: IJobHolderDocuments;
     otherDocuments?: IOtherDocuments;
+    subTravelers?: IVisaForm[];
   }
   

@@ -64,7 +64,8 @@ const visaSchema = new Schema<IVisaForm>({
   businessDocuments: { type: businessDocumentsSchema, required: false },
   studentDocuments: { type: studentDocumentsSchema, required: false },
   jobHolderDocuments: { type: jobHolderDocumentsSchema, required: false },
-  otherDocuments: { type: otherDocumentsSchema, required: false }
+  otherDocuments: { type: otherDocumentsSchema, required: false },
+  subTravelers: [{ type: Schema.Types.Mixed, required: false }]
 }, {
   timestamps: true
 });

@@ -13,6 +13,7 @@ const createVisaApplication = async (payload: IVisaForm) => {
     // console.log("Result:", result);
     return result;
   } catch (error) {
+    console.log("Error:", error);
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to create visa application");
   }
 };

@@ -7,45 +7,55 @@ import { visaValidationSchema } from "./visa.validation";
 
 const router = Router();
 
-const uploadFields = [
-  // General Documents
-  { name: "passportCopy", maxCount: 1 },
-  { name: "passportPhoto", maxCount: 1 },
-  { name: "bankStatement", maxCount: 1 },
-  { name: "bankSolvency", maxCount: 1 },
-  { name: "visitingCard", maxCount: 1 },
-  { name: "hotelBooking", maxCount: 1 },
-  { name: "airTicket", maxCount: 1 },
+const getUploadFields = () => {
+  const fields = [];
   
-  // Business Documents
-  { name: "tradeLicense", maxCount: 1 },
-  { name: "notarizedId", maxCount: 1 },
-  { name: "memorandum", maxCount: 1 },
-  { name: "officePad", maxCount: 1 },
-  
-  // Student Documents
-  { name: "studentId", maxCount: 1 },
-  { name: "travelLetter", maxCount: 1 },
-  { name: "birthCertificate", maxCount: 1 },
-  
-  // Job Holder Documents
-  { name: "nocCertificate", maxCount: 1 },
-  { name: "officialId", maxCount: 1 },
-  { name: "bmdcCertificate", maxCount: 1 },
-  { name: "barCouncilCertificate", maxCount: 1 },
-  { name: "retirementCertificate", maxCount: 1 },
-  
-  // Other Documents
-  { name: "marriageCertificate", maxCount: 1 }
-];
+  const documentTypes = [
+    // General Documents
+    'passportCopy', 'passportPhoto', 'bankStatement', 'bankSolvency', 
+    'visitingCard', 'hotelBooking', 'airTicket',
+    // Business Documents
+    'tradeLicense', 'notarizedId', 'memorandum', 'officePad',
+    // Student Documents
+    'studentId', 'travelLetter', 'birthCertificate',
+    // Job Holder Documents
+    'nocCertificate', 'officialId', 'bmdcCertificate', 
+    'barCouncilCertificate', 'retirementCertificate',
+    // Other Documents
+    'marriageCertificate'
+  ];
+
+  // Add primary traveler fields
+  documentTypes.forEach(docType => {
+    fields.push({ 
+      name: `primaryTraveler_${docType}`, 
+      maxCount: 1 
+    });
+  });
+
+  // Add a single field for sub-travelers that matches any index
+  fields.push({
+    name: /^subTraveler\d+_.*$/,
+    maxCount: 1
+  });
+
+  return fields;
+};
 
 // Create visa application route
 router.post(
   "/create",
-  handleMultipleFiles(uploadFields),
+  handleMultipleFiles(getUploadFields()),
   (req: Request, res: Response, next: NextFunction) => {
-    req.body = JSON.parse(req.body.data);
-    next();
+    console.log("Request Body:", req.body);
+    try {
+      if (typeof req.body.data === 'string') {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
   },
   validateRequest(visaValidationSchema),
   VisaController.createVisaApplication

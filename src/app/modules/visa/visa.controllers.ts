@@ -8,22 +8,17 @@ import { IFile } from "./visa.interface";
 import { ProcessedFiles } from '../../interfaces/fileUpload';
 import AppError from "../../errors/AppError";
 
-interface UploadedFiles {
-  [key: string]: IFile;
-}
 
 const createVisaApplication = catchAsync(async (req: Request & { processedFiles?: ProcessedFiles }, res: Response, next: NextFunction) => {
   try {
-
     if (!req.processedFiles || Object.keys(req.processedFiles).length === 0) {
       throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
     }
 
     const visaData = req.body;
+    const uploadedFiles: { [key: string]: IFile } = {};
 
-    const uploadedFiles: UploadedFiles = {};
-
-    // Upload files to cloudinary and get URLs
+    // Process all files from the request
     for (const [fieldname, fieldFiles] of Object.entries(req.processedFiles)) {
       if (fieldFiles && fieldFiles.length > 0) {
         const file = fieldFiles[0];
@@ -42,30 +37,48 @@ const createVisaApplication = catchAsync(async (req: Request & { processedFiles?
       }
     }
 
-    // Create the final visa application data with proper document organization
+    // Initialize visa application data structure
     const visaApplicationData = {
       ...visaData,
       generalDocuments: {},
       businessDocuments: visaData.visaType === 'business' ? {} : undefined,
       studentDocuments: visaData.visaType === 'student' ? {} : undefined,
       jobHolderDocuments: visaData.visaType === 'jobHolder' ? {} : undefined,
-      otherDocuments: visaData.visaType === 'other' ? {} : undefined
+      otherDocuments: visaData.visaType === 'other' ? {} : undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      subTravelers: visaData.subTravelers?.map((subTraveler: any) => ({
+        ...subTraveler,
+        generalDocuments: {},
+        businessDocuments: subTraveler.visaType === 'business' ? {} : undefined,
+        studentDocuments: subTraveler.visaType === 'student' ? {} : undefined,
+        jobHolderDocuments: subTraveler.visaType === 'jobHolder' ? {} : undefined,
+        otherDocuments: subTraveler.visaType === 'other' ? {} : undefined
+      }))
     };
 
-    // Organize uploaded files into their respective categories
+    // Process primary traveler's files
     Object.entries(uploadedFiles).forEach(([key, value]) => {
-      if (key.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
-        visaApplicationData.generalDocuments[key] = value;
-      } else if (visaData.visaType === 'business' && key.match(/^(tradeLicense|notarizedId|memorandum|officePad)$/)) {
-        visaApplicationData.businessDocuments[key] = value;
-      } else if (visaData.visaType === 'student' && key.match(/^(studentId|travelLetter|birthCertificate)$/)) {
-        visaApplicationData.studentDocuments[key] = value;
-      } else if (visaData.visaType === 'jobHolder' && key.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
-        visaApplicationData.jobHolderDocuments[key] = value;
-      } else if (visaData.visaType === 'other' && key === 'marriageCertificate') {
-        visaApplicationData.otherDocuments[key] = value;
+      if (key.startsWith('primaryTraveler_')) {
+        const documentKey = key.replace('primaryTraveler_', '');
+        processDocumentFile(visaApplicationData, documentKey, value, visaData.visaType);
       }
     });
+
+    // Process sub-travelers' files - using regex to match any sub-traveler index
+    if (visaApplicationData.subTravelers) {
+      Object.entries(uploadedFiles).forEach(([key, value]) => {
+        const subTravelerMatch = key.match(/^subTraveler(\d+)_(.+)$/);
+        if (subTravelerMatch) {
+          const [, indexStr, documentKey] = subTravelerMatch;
+          const index = parseInt(indexStr);
+          const subTraveler = visaApplicationData.subTravelers[index];
+          
+          if (subTraveler) {
+            processDocumentFile(subTraveler, documentKey, value, subTraveler.visaType);
+          }
+        }
+      });
+    }
 
     const result = await VisaServices.createVisaApplication(visaApplicationData);
 
@@ -79,6 +92,22 @@ const createVisaApplication = catchAsync(async (req: Request & { processedFiles?
     next(error);
   }
 });
+
+// Helper function to process document files
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const processDocumentFile = (traveler: any, documentKey: string, value: IFile, visaType: string) => {
+  if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+    traveler.generalDocuments[documentKey] = value;
+  } else if (visaType === 'business' && documentKey.match(/^(tradeLicense|notarizedId|memorandum|officePad)$/)) {
+    traveler.businessDocuments[documentKey] = value;
+  } else if (visaType === 'student' && documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+    traveler.studentDocuments[documentKey] = value;
+  } else if (visaType === 'jobHolder' && documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+    traveler.jobHolderDocuments[documentKey] = value;
+  } else if (visaType === 'other' && documentKey === 'marriageCertificate') {
+    traveler.otherDocuments[documentKey] = value;
+  }
+};
 
 const getVisaApplications = catchAsync(async (req: Request, res: Response) => {
   const result = await VisaServices.getVisaApplications();

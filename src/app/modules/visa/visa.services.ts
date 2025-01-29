@@ -232,21 +232,22 @@ const updateVisaApplication = async (id: string, visaData: Partial<IVisaForm>, p
 
 const deleteSubTraveler = async (visaId: string, subTravelerId: string) => {
   try {
-    const application = await VisaModel.findById(visaId);
-    if (!application) {
-      throw new AppError(httpStatus.NOT_FOUND, "Visa application not found");
-    }
-
-    // Find the subtraveler
-    const subTravelerIndex = application.subTravelers?.findIndex(
-      (traveler) => traveler._id!.toString() === subTravelerId
+    // First get the subtraveler's documents to delete from cloudinary
+    const application = await VisaModel.findOne(
+      { 
+        _id: visaId,
+        'subTravelers._id': subTravelerId 
+      },
+      { 
+        'subTravelers.$': 1 
+      }
     );
 
-    if (subTravelerIndex === undefined || subTravelerIndex === -1) {
+    if (!application || !application.subTravelers?.[0]) {
       throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
     }
 
-    const subTraveler = application.subTravelers![subTravelerIndex];
+    const subTraveler = application.subTravelers[0];
 
     // Extract all files from the subtraveler's documents
     const fileData: { documentType: string; url: string; id: string }[] = [];
@@ -261,11 +262,24 @@ const deleteSubTraveler = async (visaId: string, subTravelerId: string) => {
       fileData.map((file) => cloudinaryDestroyOneByOne(file.id))
     );
 
-    // Remove the subtraveler from the array
-    application.subTravelers?.splice(subTravelerIndex, 1);
+    // Remove the subtraveler using $pull operator in a single operation
+    const result = await VisaModel.findByIdAndUpdate(
+      visaId,
+      {
+        $pull: {
+          subTravelers: { _id: subTravelerId }
+        }
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
 
-    // Save the updated application
-    const result = await application.save();
+    if (!result) {
+      throw new AppError(httpStatus.NOT_FOUND, "Visa application not found");
+    }
+
     return result;
 
   } catch (error) {

@@ -41,6 +41,7 @@ export interface IFile {
   export type VisaType = 'business' | 'student' | 'jobHolder' | 'other' | '';
   
   export interface IVisaForm {
+    _id?: string;
     givenName: string;
     surname: string;
     phone: string;

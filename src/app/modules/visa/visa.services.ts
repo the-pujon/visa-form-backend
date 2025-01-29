@@ -230,10 +230,58 @@ const updateVisaApplication = async (id: string, visaData: Partial<IVisaForm>, p
   }
 };
 
+const deleteSubTraveler = async (visaId: string, subTravelerId: string) => {
+  try {
+    const application = await VisaModel.findById(visaId);
+    if (!application) {
+      throw new AppError(httpStatus.NOT_FOUND, "Visa application not found");
+    }
+
+    // Find the subtraveler
+    const subTravelerIndex = application.subTravelers?.findIndex(
+      (traveler) => traveler._id!.toString() === subTravelerId
+    );
+
+    if (subTravelerIndex === undefined || subTravelerIndex === -1) {
+      throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
+    }
+
+    const subTraveler = application.subTravelers![subTravelerIndex];
+
+    // Extract all files from the subtraveler's documents
+    const fileData: { documentType: string; url: string; id: string }[] = [];
+    fileData.push(...extractDocuments(subTraveler.generalDocuments || {}));
+    fileData.push(...extractDocuments(subTraveler.businessDocuments || {}));
+    fileData.push(...extractDocuments(subTraveler.studentDocuments || {}));
+    fileData.push(...extractDocuments(subTraveler.jobHolderDocuments || {}));
+    fileData.push(...extractDocuments(subTraveler.otherDocuments || {}));
+
+    // Delete all files from cloudinary
+    await Promise.all(
+      fileData.map((file) => cloudinaryDestroyOneByOne(file.id))
+    );
+
+    // Remove the subtraveler from the array
+    application.subTravelers?.splice(subTravelerIndex, 1);
+
+    // Save the updated application
+    const result = await application.save();
+    return result;
+
+  } catch (error) {
+    console.error("Delete sub-traveler error:", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Failed to delete sub-traveler"
+    );
+  }
+};
+
 export const VisaServices = {
   createVisaApplication,
   getVisaApplications,
   getVisaApplicationById,
   deleteVisaApplication,
   updateVisaApplication,
+  deleteSubTraveler,
 };

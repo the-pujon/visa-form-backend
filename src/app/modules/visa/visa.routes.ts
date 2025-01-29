@@ -88,4 +88,10 @@ router.put(
   VisaController.updateVisaApplication
 );
 
+// Delete sub-traveler
+router.delete(
+  "/:visaId/sub-traveler/:subTravelerId",
+  VisaController.deleteSubTraveler
+);
+
 export const visaRoutes = router;

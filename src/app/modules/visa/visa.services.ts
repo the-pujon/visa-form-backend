@@ -6,13 +6,7 @@ import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { extractDocuments, prepareVisaApplicationData, processAndUploadFiles, updateDocumentField } from "./visa.utils";
 import { 
   IGeneralDocuments,
-  // IBusinessDocuments, 
-  // IGeneralDocuments, 
-  // IJobHolderDocuments, 
-  // IOtherDocuments,
-  // IStudentDocuments, 
-  IVisaForm,
-  // IFile 
+  IVisaForm
 } from "./visa.interface";
 import { v2 as cloudinary } from "cloudinary";
 import configs from "../../configs";
@@ -38,7 +32,36 @@ const createVisaApplication = async (visaData: IVisaForm, processedFiles: Proces
 
   const uploadedFiles = await processAndUploadFiles(processedFiles, visaData.email);
   const visaApplicationData = prepareVisaApplicationData(visaData, uploadedFiles);
+
+  // Check if primary traveler already exists
+  const existingApplication = await VisaModel.findOne({ email: visaApplicationData.email });
   
+  if (existingApplication) {
+    // If application exists and has new subtravelers, append them
+    if (visaApplicationData.subTravelers && visaApplicationData.subTravelers.length > 0) {
+      const result = await VisaModel.findByIdAndUpdate(
+        existingApplication._id,
+        {
+          $push: {
+            subTravelers: {
+              $each: visaApplicationData.subTravelers
+            }
+          }
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!result) {
+        throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to update existing application');
+      }
+
+      return result;
+    } else {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Primary traveler already exists and no new subtravelers provided');
+    }
+  }
+  
+  // If no existing application, create new one
   const result = await VisaModel.create(visaApplicationData);
   return result;
 };

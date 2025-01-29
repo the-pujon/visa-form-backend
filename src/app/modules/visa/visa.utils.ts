@@ -22,14 +22,14 @@ export const processDocumentFile = (traveler: any, documentKey: string, value: I
   };
 
 
- export const processAndUploadFiles = async (processedFiles: ProcessedFiles) => {
+ export const processAndUploadFiles = async (processedFiles: ProcessedFiles, email: string) => {
     const uploadedFiles: { [key: string]: IFile } = {};
   
     for (const [fieldname, fieldFiles] of Object.entries(processedFiles)) {
       if (fieldFiles && fieldFiles.length > 0) {
         const file = fieldFiles[0];
         try {
-          const uploadedFile = await cloudinaryUpload(file.filename, file.path);
+          const uploadedFile = await cloudinaryUpload(file.filename, file.path, email);
           if (uploadedFile && typeof uploadedFile === 'object' && 'secure_url' in uploadedFile && 'public_id' in uploadedFile) {
             uploadedFiles[fieldname] = {
               url: String(uploadedFile.secure_url),
@@ -92,3 +92,14 @@ export const processDocumentFile = (traveler: any, documentKey: string, value: I
   
     return visaApplicationData;
   };
+  
+      // Helper function to extract documents from a source object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const extractDocuments = (source: Record<string, any>) => {
+      return Object.entries(source || {}).reduce((acc, [key, value]) => {
+        if (key !== "_id" && value?.url && value?.id) {
+          acc.push({ documentType: key, url: value.url, id: value.id });
+        }
+        return acc;
+      }, [] as { documentType: string; url: string; id: string }[]);
+    };

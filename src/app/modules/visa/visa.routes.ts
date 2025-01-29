@@ -67,4 +67,7 @@ router.get("/", VisaController.getVisaApplications);
 // Get single visa application
 router.get("/:id", VisaController.getVisaApplicationById);
 
+// Delete visa application
+router.delete("/:id", VisaController.deleteVisaApplication);
+
 export const visaRoutes = router;

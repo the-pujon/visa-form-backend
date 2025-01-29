@@ -46,7 +46,7 @@ export interface IFile {
     phone: string;
     email: string;
     address: string;
-    notes: string;
+    notes?: string;
     visaType: VisaType;
     generalDocuments: IGeneralDocuments;
     businessDocuments?: IBusinessDocuments;

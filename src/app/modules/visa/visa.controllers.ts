@@ -46,8 +46,21 @@ const getVisaApplicationById = catchAsync(async (req: Request, res: Response) =>
   });
 });
 
+const deleteVisaApplication = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await VisaServices.deleteVisaApplication(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Visa application deleted successfully",
+    data: result,
+  });
+});
+
 export const VisaController = {
   createVisaApplication,
   getVisaApplications,
   getVisaApplicationById,
+  deleteVisaApplication
 };

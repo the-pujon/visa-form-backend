@@ -8,10 +8,11 @@ cloudinary.config({
   api_secret: configs.cloud_api_secret,
 });
 
-export const cloudinaryUpload = (imageName: string, path: string) => {
+export const cloudinaryUpload = (imageName: string, path: string, email: string) => {
   const fileExtension = path.split('.').pop()?.toLowerCase();
   const uploadOptions = {
     public_id: imageName,
+    folder: email,
     ...(fileExtension === 'pdf' ? {
       resource_type: 'raw' as const,
       format: 'pdf'
@@ -31,6 +32,7 @@ export const cloudinaryUpload = (imageName: string, path: string) => {
           // console.error("error uploading image", err)
           reject(err);
         } else {
+          // console.log(result)
           resolve(result);
           // console.log("Upload successful")
           //   console.log(result)

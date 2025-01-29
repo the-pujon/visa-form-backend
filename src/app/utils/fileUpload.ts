@@ -112,7 +112,8 @@ export const handleMultipleFiles = (fields: { name: string | RegExp; maxCount: n
         }
 
         if (!req.files || req.files.length === 0) {
-          return next(new AppError(httpStatus.BAD_REQUEST, 'No files uploaded'));
+          // return next(new AppError(httpStatus.BAD_REQUEST, 'No files uploaded'));
+          return next();
         }
 
         try {

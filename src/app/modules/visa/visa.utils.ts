@@ -3,7 +3,7 @@
 import AppError from "../../errors/AppError";
 import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { cloudinaryUpload } from "../../utils/cloudinaryUpload";
-import { IFile } from "./visa.interface";
+import { IFile, IVisaForm } from "./visa.interface";
 import httpStatus from "http-status";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,3 +103,53 @@ export const extractDocuments = (source: Record<string, any>) => {
         return acc;
       }, [] as { documentType: string; url: string; id: string }[]);
     };
+
+
+/**
+ * Helper function to update document fields based on document type and visa category
+ * @param documentKey - The key/name of the document (e.g., 'passportCopy', 'studentId')
+ * @param value - The file information including URL and ID
+ * @param targetData - The object where the document should be stored
+ * @param existingData - The existing visa application data for reference
+ */
+export const updateDocumentField = (
+  documentKey: string,
+  value: IFile,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  targetData: Record<string, any>,
+  existingData: Partial<IVisaForm>
+) => {
+  if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+    if (!targetData.generalDocuments) {
+      targetData.generalDocuments = {};
+    }
+    targetData.generalDocuments[documentKey] = value;
+  } 
+  else if (existingData.visaType === 'business' && 
+           documentKey.match(/^(tradeLicense|notarizedId|memorandum|officePad)$/)) {
+    if (!targetData.businessDocuments) {
+      targetData.businessDocuments = {};
+    }
+    targetData.businessDocuments[documentKey] = value;
+  } 
+  else if (existingData.visaType === 'student' && 
+           documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+    if (!targetData.studentDocuments) {
+      targetData.studentDocuments = {};
+    }
+    targetData.studentDocuments[documentKey] = value;
+  } 
+  else if (existingData.visaType === 'jobHolder' && 
+           documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+    if (!targetData.jobHolderDocuments) {
+      targetData.jobHolderDocuments = {};
+    }
+    targetData.jobHolderDocuments[documentKey] = value;
+  } 
+  else if (existingData.visaType === 'other' && documentKey === 'marriageCertificate') {
+    if (!targetData.otherDocuments) {
+      targetData.otherDocuments = {};
+    }
+    targetData.otherDocuments[documentKey] = value;
+  }
+};

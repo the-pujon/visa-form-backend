@@ -47,6 +47,14 @@ const otherDocumentsSchema = new Schema({
   marriageCertificate: { type: fileSchema, required: true }
 });
 
+// Subtraveler Schema
+const subTravelerSchema = new Schema({
+  // This will automatically add _id
+}, { 
+  timestamps: true,
+  strict: false // Allows for flexible additional fields
+});
+
 // Main Visa Form Schema
 const visaSchema = new Schema<IVisaForm>({
   givenName: { type: String, required: true },
@@ -65,7 +73,7 @@ const visaSchema = new Schema<IVisaForm>({
   studentDocuments: { type: studentDocumentsSchema, required: false },
   jobHolderDocuments: { type: jobHolderDocumentsSchema, required: false },
   otherDocuments: { type: otherDocumentsSchema, required: false },
-  subTravelers: [{ type: Schema.Types.Mixed, required: false }]
+  subTravelers: [{ type: subTravelerSchema, required: false }]
 }, {
   timestamps: true
 });

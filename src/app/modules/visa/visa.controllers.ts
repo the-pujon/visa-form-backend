@@ -58,9 +58,22 @@ const deleteVisaApplication = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
+const updateVisaApplication = catchAsync(async (req: Request & { processedFiles?: ProcessedFiles }, res: Response) => {
+  const { id } = req.params;
+  const result = await VisaServices.updateVisaApplication(id, req.body, req.processedFiles!);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Visa application updated successfully",
+    data: result,
+  });
+});
+
 export const VisaController = {
   createVisaApplication,
   getVisaApplications,
   getVisaApplicationById,
-  deleteVisaApplication
+  deleteVisaApplication,
+  updateVisaApplication
 };

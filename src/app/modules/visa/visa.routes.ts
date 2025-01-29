@@ -70,4 +70,22 @@ router.get("/:id", VisaController.getVisaApplicationById);
 // Delete visa application
 router.delete("/:id", VisaController.deleteVisaApplication);
 
+// Update visa application
+router.put(
+  "/:id",
+  handleMultipleFiles(getUploadFields()),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (typeof req.body.data === 'string') {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  validateRequest(visaValidationSchema),
+  VisaController.updateVisaApplication
+);
+
 export const visaRoutes = router;

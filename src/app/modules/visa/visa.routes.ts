@@ -2,7 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { VisaController } from "./visa.controllers";
 import { handleMultipleFiles } from "../../utils/fileUpload";
 import validateRequest from "../../middlewares/validateRequest";
-import { visaValidationSchema } from "./visa.validation";
+import { updateVisaValidationSchema, visaValidationSchema } from "./visa.validation";
 // import { visaValidationSchema } from "./visa.validation";
 
 const router = Router();
@@ -84,7 +84,7 @@ router.put(
       next(error);
     }
   },
-  validateRequest(visaValidationSchema),
+  validateRequest(updateVisaValidationSchema),
   VisaController.updateVisaApplication
 );
 

@@ -30,6 +30,8 @@ const createVisaApplication = async (visaData: IVisaForm, processedFiles: Proces
     throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
   }
 
+  console.log(processedFiles);
+
   const uploadedFiles = await processAndUploadFiles(processedFiles, visaData.email);
   const visaApplicationData = prepareVisaApplicationData(visaData, uploadedFiles);
 

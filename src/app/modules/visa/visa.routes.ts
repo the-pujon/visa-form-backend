@@ -8,7 +8,8 @@ import { updateVisaValidationSchema, visaValidationSchema } from "./visa.validat
 const router = Router();
 
 const getUploadFields = () => {
-  const fields = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fields:any[] = [];
   
   const documentTypes = [
     // General Documents

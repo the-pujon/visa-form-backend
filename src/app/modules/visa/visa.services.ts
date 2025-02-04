@@ -6,7 +6,7 @@ import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { extractDocuments, prepareVisaApplicationData, processAndUploadFiles, updateDocumentField } from "./visa.utils";
 import { 
   IFile,
-  IGeneralDocuments,
+  // IGeneralDocuments,
   IVisaForm
 } from "./visa.interface";
 import { v2 as cloudinary } from "cloudinary";
@@ -357,34 +357,37 @@ const updateSubTraveler = async (
 
     if (processedFiles && Object.keys(processedFiles).length > 0) {
       // Upload new files
-      newUploadedFiles = await processAndUploadFiles(processedFiles, updateData.email || subTraveler.email);
+      newUploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
       
       // Process uploaded files
       for (const [key, value] of Object.entries(newUploadedFiles)) {
         // Handle both formats: subTraveler_documentType and subTravelerN_documentType
         const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
+
+        updateDocumentField(documentKey, value, updateData, subTraveler);
         
         // Update the corresponding document field based on document type
-        if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
-          if (!updateData.generalDocuments) updateData.generalDocuments = {};
-          updateData.generalDocuments[documentKey] = value;
-        } 
-        else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
-          if (!updateData.studentDocuments) updateData.studentDocuments = {};
-          updateData.studentDocuments[documentKey] = value;
-        }
-        else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
-          if (!updateData.jobHolderDocuments) updateData.jobHolderDocuments = {};
-          updateData.jobHolderDocuments[documentKey] = value;
-        }
-        else if (documentKey.match(/^(marriageCertificate)$/)) {
-          if (!updateData.otherDocuments) updateData.otherDocuments = {};
-          updateData.otherDocuments[documentKey] = value;
-        }
+        // if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+        //   if (!updateData.generalDocuments) updateData.generalDocuments = {};
+        //   updateData.generalDocuments[documentKey] = value;
+        // } 
+        // else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+        //   if (!updateData.studentDocuments) updateData.studentDocuments = {};
+        //   updateData.studentDocuments[documentKey] = value;
+        // }
+        // else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+        //   if (!updateData.jobHolderDocuments) updateData.jobHolderDocuments = {};
+        //   updateData.jobHolderDocuments[documentKey] = value;
+        // }
+        // else if (documentKey.match(/^(marriageCertificate)$/)) {
+        //   if (!updateData.otherDocuments) updateData.otherDocuments = {};
+        //   updateData.otherDocuments[documentKey] = value;
+        // }
       }
     }
 
     // Prepare update data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateFields: any = { ...updateData };
     
     // Update the sub-traveler

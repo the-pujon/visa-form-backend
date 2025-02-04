@@ -33,10 +33,17 @@ const getUploadFields = () => {
     });
   });
 
-  // Add a single field for sub-travelers that matches any index
-  fields.push({
-    name: /^subTraveler\d+_.*$/,
-    maxCount: 1
+  // Add fields for sub-travelers
+  documentTypes.forEach(docType => {
+    fields.push({ 
+      name: `subTraveler_${docType}`, 
+      maxCount: 1 
+    });
+    // Also add numbered format
+    fields.push({
+      name: new RegExp(`^subTraveler\\d+_${docType}$`),
+      maxCount: 1
+    });
   });
 
   return fields;
@@ -92,6 +99,24 @@ router.put(
 router.delete(
   "/:visaId/sub-traveler/:subTravelerId",
   VisaController.deleteSubTraveler
+);
+
+// Update sub-traveler
+router.put(
+  "/:visaId/sub-traveler/:subTravelerId",
+  handleMultipleFiles(getUploadFields()),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (typeof req.body.data === 'string') {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  validateRequest(updateVisaValidationSchema),
+  VisaController.updateSubTraveler
 );
 
 export const visaRoutes = router;

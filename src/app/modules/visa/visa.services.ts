@@ -5,6 +5,7 @@ import VisaModel from "./visa.model";
 import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { extractDocuments, prepareVisaApplicationData, processAndUploadFiles, updateDocumentField } from "./visa.utils";
 import { 
+  IFile,
   IGeneralDocuments,
   IVisaForm
 } from "./visa.interface";
@@ -184,53 +185,55 @@ const updateVisaApplication = async (id: string, visaData: Partial<IVisaForm>, p
     };
 
     // Process and upload new files if any were provided
+    let newUploadedFiles: Record<string, IFile> = {};
+
     if (processedFiles && Object.keys(processedFiles).length > 0) {
-      const uploadedFiles = await processAndUploadFiles(processedFiles, existingApplication.email);
+      newUploadedFiles = await processAndUploadFiles(processedFiles, existingApplication.email);
       
       // Iterate through uploaded files and organize them
-      for (const [key, value] of Object.entries(uploadedFiles)) {
+      for (const [key, value] of Object.entries(newUploadedFiles)) {
         // Handle primary traveler documents
         if (key.startsWith('primaryTraveler_')) {
           const documentKey = key.replace('primaryTraveler_', '');
           updateDocumentField(documentKey, value, updateData, existingApplication);
         }
         // Handle sub-travelers documents
-        else if (key.match(/^subTraveler\d+_/)) {
-          const [, indexStr, documentKey] = key.match(/^subTraveler(\d+)_(.+)$/) || [];
-          if (indexStr && documentKey) {
-            const index = parseInt(indexStr);
+        // else if (key.match(/^subTraveler\d+_/)) {
+        //   const [, indexStr, documentKey] = key.match(/^subTraveler(\d+)_(.+)$/) || [];
+        //   if (indexStr && documentKey) {
+        //     const index = parseInt(indexStr);
             
-            // Ensure sub-travelers array exists
-            if (!updateData.subTravelers) {
-              updateData.subTravelers = [...(existingApplication.subTravelers || [])];
-            }
+        //     // Ensure sub-travelers array exists
+        //     if (!updateData.subTravelers) {
+        //       updateData.subTravelers = [...(existingApplication.subTravelers || [])];
+        //     }
             
-            // Ensure specific sub-traveler exists
-            if (!updateData.subTravelers[index]) {
-              updateData.subTravelers[index] = { 
-                ...existingApplication.subTravelers?.[index],
-                givenName: existingApplication.subTravelers?.[index]?.givenName || '',
-                surname: existingApplication.subTravelers?.[index]?.surname || '',
-                phone: existingApplication.subTravelers?.[index]?.phone || '',
-                email: existingApplication.subTravelers?.[index]?.email || '',
-                address: existingApplication.subTravelers?.[index]?.address || '',
-                visaType: existingApplication.subTravelers?.[index]?.visaType || '',
-                generalDocuments: existingApplication.subTravelers?.[index]?.generalDocuments as IGeneralDocuments,
-                businessDocuments: existingApplication.subTravelers?.[index]?.businessDocuments,
-                studentDocuments: existingApplication.subTravelers?.[index]?.studentDocuments,
-                jobHolderDocuments: existingApplication.subTravelers?.[index]?.jobHolderDocuments,
-                otherDocuments: existingApplication.subTravelers?.[index]?.otherDocuments,
-              };
-            }
+        //     // Ensure specific sub-traveler exists
+        //     if (!updateData.subTravelers[index]) {
+        //       updateData.subTravelers[index] = { 
+        //         ...existingApplication.subTravelers?.[index],
+        //         givenName: existingApplication.subTravelers?.[index]?.givenName || '',
+        //         surname: existingApplication.subTravelers?.[index]?.surname || '',
+        //         phone: existingApplication.subTravelers?.[index]?.phone || '',
+        //         email: existingApplication.subTravelers?.[index]?.email || '',
+        //         address: existingApplication.subTravelers?.[index]?.address || '',
+        //         visaType: existingApplication.subTravelers?.[index]?.visaType || '',
+        //         generalDocuments: existingApplication.subTravelers?.[index]?.generalDocuments as IGeneralDocuments,
+        //         businessDocuments: existingApplication.subTravelers?.[index]?.businessDocuments,
+        //         studentDocuments: existingApplication.subTravelers?.[index]?.studentDocuments,
+        //         jobHolderDocuments: existingApplication.subTravelers?.[index]?.jobHolderDocuments,
+        //         otherDocuments: existingApplication.subTravelers?.[index]?.otherDocuments,
+        //       };
+        //     }
 
-            updateDocumentField(
-              documentKey, 
-              value, 
-              updateData.subTravelers[index], 
-              existingApplication.subTravelers?.[index] || {}
-            );
-          }
-        }
+        //     updateDocumentField(
+        //       documentKey, 
+        //       value, 
+        //       updateData.subTravelers[index], 
+        //       existingApplication.subTravelers?.[index] || {}
+        //     );
+        //   }
+        // }
       }
     }
 
@@ -316,6 +319,113 @@ const deleteSubTraveler = async (visaId: string, subTravelerId: string) => {
   }
 };
 
+/**
+ * Updates a specific sub-traveler in a visa application
+ * @param visaId - The ID of the main visa application
+ * @param subTravelerId - The ID of the sub-traveler to update
+ * @param updateData - The data to update for the sub-traveler
+ * @param processedFiles - New files to upload and update
+ * @returns The updated visa application document
+ * @throws AppError if application is not found or update fails
+ */
+const updateSubTraveler = async (
+  visaId: string,
+  subTravelerId: string,
+  updateData: Partial<IVisaForm>,
+  processedFiles?: ProcessedFiles
+) => {
+  try {
+    // Find the visa application and the specific sub-traveler
+    const visaApplication = await VisaModel.findById(visaId);
+    if (!visaApplication) {
+      throw new AppError(httpStatus.NOT_FOUND, "Visa application not found");
+    }
+
+    const subTraveler = visaApplication.subTravelers!.find(
+      (st) => st._id?.toString() === subTravelerId
+    );
+
+
+    console.log(subTraveler);
+
+    if (!subTraveler) {
+      throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
+    }
+
+    // Handle file uploads if new files are provided
+    let newUploadedFiles: Record<string, IFile> = {};
+
+    if (processedFiles && Object.keys(processedFiles).length > 0) {
+      // Upload new files
+      newUploadedFiles = await processAndUploadFiles(processedFiles, updateData.email || subTraveler.email);
+      
+      // Process uploaded files
+      for (const [key, value] of Object.entries(newUploadedFiles)) {
+        // Handle both formats: subTraveler_documentType and subTravelerN_documentType
+        const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
+        
+        // Update the corresponding document field based on document type
+        if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+          if (!updateData.generalDocuments) updateData.generalDocuments = {};
+          updateData.generalDocuments[documentKey] = value;
+        } 
+        else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+          if (!updateData.studentDocuments) updateData.studentDocuments = {};
+          updateData.studentDocuments[documentKey] = value;
+        }
+        else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+          if (!updateData.jobHolderDocuments) updateData.jobHolderDocuments = {};
+          updateData.jobHolderDocuments[documentKey] = value;
+        }
+        else if (documentKey.match(/^(marriageCertificate)$/)) {
+          if (!updateData.otherDocuments) updateData.otherDocuments = {};
+          updateData.otherDocuments[documentKey] = value;
+        }
+      }
+    }
+
+    // Prepare update data
+    const updateFields: any = { ...updateData };
+    
+    // Update the sub-traveler
+    const result = await VisaModel.findOneAndUpdate(
+      { 
+        _id: visaId,
+        'subTravelers._id': subTravelerId 
+      },
+      { 
+        $set: {
+          'subTravelers.$.givenName': updateFields.givenName || subTraveler.givenName,
+          'subTravelers.$.surname': updateFields.surname || subTraveler.surname,
+          'subTravelers.$.phone': updateFields.phone || subTraveler.phone,
+          'subTravelers.$.email': updateFields.email || subTraveler.email,
+          'subTravelers.$.address': updateFields.address || subTraveler.address,
+          'subTravelers.$.notes': updateFields.notes ?? subTraveler.notes,
+          'subTravelers.$.visaType': updateFields.visaType || subTraveler.visaType,
+          'subTravelers.$.generalDocuments': updateFields.generalDocuments || subTraveler.generalDocuments,
+          'subTravelers.$.businessDocuments': updateFields.businessDocuments || subTraveler.businessDocuments,
+          'subTravelers.$.studentDocuments': updateFields.studentDocuments || subTraveler.studentDocuments,
+          'subTravelers.$.jobHolderDocuments': updateFields.jobHolderDocuments || subTraveler.jobHolderDocuments,
+          'subTravelers.$.otherDocuments': updateFields.otherDocuments || subTraveler.otherDocuments
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!result) {
+      throw new AppError(httpStatus.NOT_FOUND, "Failed to update sub-traveler in db");
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Update sub-traveler error:", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      error instanceof AppError ? error.message : "Failed to update sub-traveler"
+    );
+  }
+};
+
 export const VisaServices = {
   createVisaApplication,
   getVisaApplications,
@@ -323,4 +433,5 @@ export const VisaServices = {
   deleteVisaApplication,
   updateVisaApplication,
   deleteSubTraveler,
+  updateSubTraveler,
 };

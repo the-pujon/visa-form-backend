@@ -77,7 +77,7 @@ export const processDocumentFile = (traveler: any, documentKey: string, value: I
     // Process sub-travelers' files
     if (visaApplicationData.subTravelers) {
       Object.entries(uploadedFiles).forEach(([key, value]) => {
-        const subTravelerMatch = key.match(/^subTraveler(\d+)_(.+)$/);
+        const subTravelerMatch = key.match(/^subTraveler(\d+)?_(.+)$/)
         if (subTravelerMatch) {
           const [, indexStr, documentKey] = subTravelerMatch;
           const index = parseInt(indexStr);

@@ -82,6 +82,18 @@ const deleteSubTraveler = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateSubTraveler = catchAsync(async (req: Request, res: Response) => {
+  const { visaId, subTravelerId } = req.params;
+  const result = await VisaServices.updateSubTraveler(visaId, subTravelerId, req.body, req.processedFiles!);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Sub-traveler updated successfully",
+    data: result,
+  });
+});
+
 export const VisaController = {
   createVisaApplication,
   getVisaApplications,
@@ -89,4 +101,5 @@ export const VisaController = {
   deleteVisaApplication,
   updateVisaApplication,
   deleteSubTraveler,
+  updateSubTraveler,
 };

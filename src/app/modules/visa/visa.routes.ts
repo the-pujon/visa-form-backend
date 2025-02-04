@@ -120,4 +120,10 @@ router.put(
   VisaController.updateSubTraveler
 );
 
+// Get sub-traveler by ID
+router.get(
+  "/:visaId/sub-traveler/:subTravelerId",
+  VisaController.getSubTravelerById
+);
+
 export const visaRoutes = router;

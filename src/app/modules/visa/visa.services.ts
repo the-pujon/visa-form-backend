@@ -442,6 +442,29 @@ const updateSubTraveler = async (
   }
 };
 
+
+const getSubTravelerById = async (visaId: string, subTravelerId: string) => {
+  try {
+    const result = await VisaModel.findOne(
+      { _id: visaId, 'subTravelers._id': subTravelerId },
+
+      { 
+        'subTravelers.$': 1 
+      }
+    );
+    if (!result) {
+      throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
+    }
+    return result.subTravelers![0];
+  } catch (error) {
+    console.error("Error getting sub-traveler:", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      error instanceof AppError ? error.message : "Failed to get sub-traveler"
+    );
+  }
+}
+
 export const VisaServices = {
   createVisaApplication,
   getVisaApplications,
@@ -450,4 +473,5 @@ export const VisaServices = {
   updateVisaApplication,
   deleteSubTraveler,
   updateSubTraveler,
+  getSubTravelerById,
 };

@@ -352,6 +352,22 @@ const updateSubTraveler = async (
       throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
     }
 
+    // Initialize update data with existing fields
+    const updateDataWithExistingFields = {
+      givenName: updateData.givenName || subTraveler.givenName,
+      surname: updateData.surname || subTraveler.surname,
+      phone: updateData.phone || subTraveler.phone,
+      email: updateData.email || subTraveler.email,
+      address: updateData.address || subTraveler.address,
+      notes: updateData.notes || subTraveler.notes,
+      visaType: updateData.visaType || subTraveler.visaType,
+      generalDocuments: { ...subTraveler.generalDocuments },
+      businessDocuments: subTraveler.businessDocuments ? { ...subTraveler.businessDocuments } : undefined,
+      studentDocuments: subTraveler.studentDocuments ? { ...subTraveler.studentDocuments } : undefined,
+      jobHolderDocuments: subTraveler.jobHolderDocuments ? { ...subTraveler.jobHolderDocuments } : undefined,
+      otherDocuments: subTraveler.otherDocuments ? { ...subTraveler.otherDocuments } : undefined,
+    };
+
     // Handle file uploads if new files are provided
     let newUploadedFiles: Record<string, IFile> = {};
 
@@ -364,32 +380,10 @@ const updateSubTraveler = async (
         // Handle both formats: subTraveler_documentType and subTravelerN_documentType
         const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
 
-        updateDocumentField(documentKey, value, updateData, subTraveler);
-        
-        // Update the corresponding document field based on document type
-        // if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
-        //   if (!updateData.generalDocuments) updateData.generalDocuments = {};
-        //   updateData.generalDocuments[documentKey] = value;
-        // } 
-        // else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
-        //   if (!updateData.studentDocuments) updateData.studentDocuments = {};
-        //   updateData.studentDocuments[documentKey] = value;
-        // }
-        // else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
-        //   if (!updateData.jobHolderDocuments) updateData.jobHolderDocuments = {};
-        //   updateData.jobHolderDocuments[documentKey] = value;
-        // }
-        // else if (documentKey.match(/^(marriageCertificate)$/)) {
-        //   if (!updateData.otherDocuments) updateData.otherDocuments = {};
-        //   updateData.otherDocuments[documentKey] = value;
-        // }
+        updateDocumentField(documentKey, value, updateDataWithExistingFields, subTraveler);
       }
     }
 
-    // Prepare update data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateFields: any = { ...updateData };
-    
     // Update the sub-traveler
     const result = await VisaModel.findOneAndUpdate(
       { 
@@ -398,18 +392,18 @@ const updateSubTraveler = async (
       },
       { 
         $set: {
-          'subTravelers.$.givenName': updateFields.givenName || subTraveler.givenName,
-          'subTravelers.$.surname': updateFields.surname || subTraveler.surname,
-          'subTravelers.$.phone': updateFields.phone || subTraveler.phone,
-          'subTravelers.$.email': updateFields.email || subTraveler.email,
-          'subTravelers.$.address': updateFields.address || subTraveler.address,
-          'subTravelers.$.notes': updateFields.notes ?? subTraveler.notes,
-          'subTravelers.$.visaType': updateFields.visaType || subTraveler.visaType,
-          'subTravelers.$.generalDocuments': updateFields.generalDocuments || subTraveler.generalDocuments,
-          'subTravelers.$.businessDocuments': updateFields.businessDocuments || subTraveler.businessDocuments,
-          'subTravelers.$.studentDocuments': updateFields.studentDocuments || subTraveler.studentDocuments,
-          'subTravelers.$.jobHolderDocuments': updateFields.jobHolderDocuments || subTraveler.jobHolderDocuments,
-          'subTravelers.$.otherDocuments': updateFields.otherDocuments || subTraveler.otherDocuments
+          'subTravelers.$.givenName': updateDataWithExistingFields.givenName,
+          'subTravelers.$.surname': updateDataWithExistingFields.surname,
+          'subTravelers.$.phone': updateDataWithExistingFields.phone,
+          'subTravelers.$.email': updateDataWithExistingFields.email,
+          'subTravelers.$.address': updateDataWithExistingFields.address,
+          'subTravelers.$.notes': updateDataWithExistingFields.notes,
+          'subTravelers.$.visaType': updateDataWithExistingFields.visaType,
+          'subTravelers.$.generalDocuments': updateDataWithExistingFields.generalDocuments,
+          'subTravelers.$.businessDocuments': updateDataWithExistingFields.businessDocuments,
+          'subTravelers.$.studentDocuments': updateDataWithExistingFields.studentDocuments,
+          'subTravelers.$.jobHolderDocuments': updateDataWithExistingFields.jobHolderDocuments,
+          'subTravelers.$.otherDocuments': updateDataWithExistingFields.otherDocuments
         }
       },
       { new: true, runValidators: true }

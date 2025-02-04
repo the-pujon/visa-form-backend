@@ -121,34 +121,34 @@ export const updateDocumentField = (
 ) => {
   if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
     if (!targetData.generalDocuments) {
-      targetData.generalDocuments = {};
+      targetData.generalDocuments = { ...existingData.generalDocuments };
     }
     targetData.generalDocuments[documentKey] = value;
   } 
   else if (existingData.visaType === 'business' && 
            documentKey.match(/^(tradeLicense|notarizedId|memorandum|officePad)$/)) {
     if (!targetData.businessDocuments) {
-      targetData.businessDocuments = {};
+      targetData.businessDocuments = { ...existingData.businessDocuments };
     }
     targetData.businessDocuments[documentKey] = value;
   } 
   else if (existingData.visaType === 'student' && 
            documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
     if (!targetData.studentDocuments) {
-      targetData.studentDocuments = {};
+      targetData.studentDocuments = { ...existingData.studentDocuments };
     }
     targetData.studentDocuments[documentKey] = value;
   } 
   else if (existingData.visaType === 'jobHolder' && 
            documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
     if (!targetData.jobHolderDocuments) {
-      targetData.jobHolderDocuments = {};
+      targetData.jobHolderDocuments = { ...existingData.jobHolderDocuments };
     }
     targetData.jobHolderDocuments[documentKey] = value;
   } 
   else if (existingData.visaType === 'other' && documentKey === 'marriageCertificate') {
     if (!targetData.otherDocuments) {
-      targetData.otherDocuments = {};
+      targetData.otherDocuments = { ...existingData.otherDocuments };
     }
     targetData.otherDocuments[documentKey] = value;
   }

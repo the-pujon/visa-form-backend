@@ -189,55 +189,45 @@ const updateVisaApplication = async (id: string, visaData: Partial<IVisaForm>, p
     };
 
     // Process and upload new files if any were provided
-    let newUploadedFiles: Record<string, IFile> = {};
+    let uploadedFiles: Record<string, IFile> = {};
 
     if (processedFiles && Object.keys(processedFiles).length > 0) {
-      newUploadedFiles = await processAndUploadFiles(processedFiles, existingApplication.email);
+      // Delete existing files that are being replaced
+      for (const [key] of Object.entries(processedFiles)) {
+        if (key.startsWith('primaryTraveler_')) {
+          const documentKey = key.replace('primaryTraveler_', '');
+          let existingFile: IFile | undefined;
+
+          if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+            existingFile = existingApplication.generalDocuments?.[documentKey as keyof IGeneralDocuments];
+          } 
+          else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+            existingFile = existingApplication.studentDocuments?.[documentKey as keyof IStudentDocuments];
+          }
+          else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+            existingFile = existingApplication.jobHolderDocuments?.[documentKey as keyof IJobHolderDocuments];
+          }
+          else if (documentKey.match(/^(marriageCertificate)$/)) {
+            existingFile = existingApplication.otherDocuments?.[documentKey as keyof IOtherDocuments];
+          }
+
+          // Delete the file if it exists
+          if (existingFile?.id) {
+            await cloudinaryDestroyOneByOne(existingFile.id);
+          }
+        }
+      }
+
+      // Upload new files
+      uploadedFiles = await processAndUploadFiles(processedFiles, existingApplication.email);
       
       // Iterate through uploaded files and organize them
-      for (const [key, value] of Object.entries(newUploadedFiles)) {
+      for (const [key, value] of Object.entries(uploadedFiles)) {
         // Handle primary traveler documents
         if (key.startsWith('primaryTraveler_')) {
           const documentKey = key.replace('primaryTraveler_', '');
           updateDocumentField(documentKey, value, updateData, existingApplication);
         }
-        // Handle sub-travelers documents
-        // else if (key.match(/^subTraveler\d+_/)) {
-        //   const [, indexStr, documentKey] = key.match(/^subTraveler(\d+)_(.+)$/) || [];
-        //   if (indexStr && documentKey) {
-        //     const index = parseInt(indexStr);
-            
-        //     // Ensure sub-travelers array exists
-        //     if (!updateData.subTravelers) {
-        //       updateData.subTravelers = [...(existingApplication.subTravelers || [])];
-        //     }
-            
-        //     // Ensure specific sub-traveler exists
-        //     if (!updateData.subTravelers[index]) {
-        //       updateData.subTravelers[index] = { 
-        //         ...existingApplication.subTravelers?.[index],
-        //         givenName: existingApplication.subTravelers?.[index]?.givenName || '',
-        //         surname: existingApplication.subTravelers?.[index]?.surname || '',
-        //         phone: existingApplication.subTravelers?.[index]?.phone || '',
-        //         email: existingApplication.subTravelers?.[index]?.email || '',
-        //         address: existingApplication.subTravelers?.[index]?.address || '',
-        //         visaType: existingApplication.subTravelers?.[index]?.visaType || '',
-        //         generalDocuments: existingApplication.subTravelers?.[index]?.generalDocuments as IGeneralDocuments,
-        //         businessDocuments: existingApplication.subTravelers?.[index]?.businessDocuments,
-        //         studentDocuments: existingApplication.subTravelers?.[index]?.studentDocuments,
-        //         jobHolderDocuments: existingApplication.subTravelers?.[index]?.jobHolderDocuments,
-        //         otherDocuments: existingApplication.subTravelers?.[index]?.otherDocuments,
-        //       };
-        //     }
-
-        //     updateDocumentField(
-        //       documentKey, 
-        //       value, 
-        //       updateData.subTravelers[index], 
-        //       existingApplication.subTravelers?.[index] || {}
-        //     );
-        //   }
-        // }
       }
     }
 

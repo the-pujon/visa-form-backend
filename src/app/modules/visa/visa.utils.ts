@@ -119,36 +119,39 @@ export const updateDocumentField = (
   targetData: Record<string, any>,
   existingData: Partial<IVisaForm>
 ) => {
+  // Always use the targetData's visa type instead of existingData's
+  const currentVisaType = targetData.visaType;
+
   if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
     if (!targetData.generalDocuments) {
-      targetData.generalDocuments = { ...existingData.generalDocuments };
+      targetData.generalDocuments = {};
     }
     targetData.generalDocuments[documentKey] = value;
   } 
-  else if (existingData.visaType === 'business' && 
+  else if (currentVisaType === 'business' && 
            documentKey.match(/^(tradeLicense|notarizedId|memorandum|officePad)$/)) {
     if (!targetData.businessDocuments) {
-      targetData.businessDocuments = { ...existingData.businessDocuments };
+      targetData.businessDocuments = {};
     }
     targetData.businessDocuments[documentKey] = value;
   } 
-  else if (existingData.visaType === 'student' && 
+  else if (currentVisaType === 'student' && 
            documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
     if (!targetData.studentDocuments) {
-      targetData.studentDocuments = { ...existingData.studentDocuments };
+      targetData.studentDocuments = {};
     }
     targetData.studentDocuments[documentKey] = value;
   } 
-  else if (existingData.visaType === 'jobHolder' && 
+  else if (currentVisaType === 'jobHolder' && 
            documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
     if (!targetData.jobHolderDocuments) {
-      targetData.jobHolderDocuments = { ...existingData.jobHolderDocuments };
+      targetData.jobHolderDocuments = {};
     }
     targetData.jobHolderDocuments[documentKey] = value;
   } 
-  else if (existingData.visaType === 'other' && documentKey === 'marriageCertificate') {
+  else if (currentVisaType === 'other' && documentKey === 'marriageCertificate') {
     if (!targetData.otherDocuments) {
-      targetData.otherDocuments = { ...existingData.otherDocuments };
+      targetData.otherDocuments = {};
     }
     targetData.otherDocuments[documentKey] = value;
   }

@@ -5,6 +5,7 @@ import VisaModel from "./visa.model";
 import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { extractDocuments, prepareVisaApplicationData, processAndUploadFiles, updateDocumentField } from "./visa.utils";
 import { 
+  IBusinessDocuments,
   IFile,
   IGeneralDocuments,
   IJobHolderDocuments,
@@ -173,90 +174,52 @@ const updateVisaApplication = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Visa application not found');
   }
 
-  // Initialize update data with existing fields
-  let updateDataWithExistingFields = {
-    givenName: updateData.givenName || visaApplication.givenName,
-    surname: updateData.surname || visaApplication.surname,
-    phone: updateData.phone || visaApplication.phone,
-    email: updateData.email || visaApplication.email,
-    address: updateData.address || visaApplication.address,
-    notes: updateData.notes || visaApplication.notes,
-    visaType: updateData.visaType || visaApplication.visaType,
-    // Initialize all documents as undefined
-    generalDocuments: undefined,
-    studentDocuments: undefined,
-    jobHolderDocuments: undefined,
-    businessDocuments: undefined,
-    otherDocuments: undefined
+  // Create update data object with existing fields
+  const updateDataWithExistingFields: Partial<IVisaForm> = {
+    givenName: visaApplication.givenName,
+    surname: visaApplication.surname,
+    phone: visaApplication.phone,
+    email: visaApplication.email,
+    address: visaApplication.address,
+    notes: visaApplication.notes,
+    visaType: updateData.visaType,
+    generalDocuments: {
+      passportCopy: visaApplication.generalDocuments?.passportCopy || {} as IFile,
+      passportPhoto: visaApplication.generalDocuments?.passportPhoto || {} as IFile,
+      bankStatement: visaApplication.generalDocuments?.bankStatement || {} as IFile,
+      bankSolvency: visaApplication.generalDocuments?.bankSolvency || {} as IFile,
+      visitingCard: visaApplication.generalDocuments?.visitingCard || {} as IFile,
+      hotelBooking: visaApplication.generalDocuments?.hotelBooking || {} as IFile,
+      airTicket: visaApplication.generalDocuments?.airTicket || {} as IFile,
+    } as IGeneralDocuments
   };
 
-  // First, handle visa type change if needed
-  if (updateData.visaType && updateData.visaType !== visaApplication.visaType) {
-    console.log('Visa type changed from', visaApplication.visaType, 'to', updateData.visaType);
-    
-    // Function to safely delete documents and log results
-    const deleteDocuments = async (documents: Record<string, IFile> | undefined, type: string) => {
-      if (documents) {
-        console.log(`Deleting ${type} documents:`, documents);
-        for (const [key, file] of Object.entries(documents)) {
-          if (file?.id) {
-            try {
-              console.log(`Attempting to delete ${type} document: ${key} with ID: ${file.id}`);
-              const result = await cloudinaryDestroyOneByOne(file.id);
-              console.log(`Delete result for ${key}:`, result);
-            } catch (error) {
-              console.error(`Error deleting ${type} document ${key}:`, error);
-            }
-          }
-        }
-      }
-    };
-
-    // Delete ALL type-specific documents
-    await Promise.all([
-      deleteDocuments(visaApplication.studentDocuments, 'student'),
-      deleteDocuments(visaApplication.jobHolderDocuments, 'jobHolder'),
-      deleteDocuments(visaApplication.businessDocuments, 'business'),
-      deleteDocuments(visaApplication.otherDocuments, 'other')
-    ]);
-
-    // Copy only general documents
-    updateDataWithExistingFields.generalDocuments = visaApplication.generalDocuments ? { ...visaApplication.generalDocuments } : {};
-
-    // Initialize new document type object based on new visa type
-    switch (updateData.visaType) {
-      case 'student':
-        updateDataWithExistingFields.studentDocuments = {};
-        break;
-      case 'jobHolder':
-        updateDataWithExistingFields.jobHolderDocuments = {};
-        break;
-      case 'business':
-        updateDataWithExistingFields.businessDocuments = {};
-        break;
-      case 'other':
-        updateDataWithExistingFields.otherDocuments = {};
-        break;
-    }
-  } else {
-    // If visa type hasn't changed, copy existing documents
-    updateDataWithExistingFields.generalDocuments = visaApplication.generalDocuments ? { ...visaApplication.generalDocuments } : {};
-    
-    // Only copy documents for current visa type
-    switch (updateDataWithExistingFields.visaType) {
-      case 'student':
-        updateDataWithExistingFields.studentDocuments = visaApplication.studentDocuments ? { ...visaApplication.studentDocuments } : {};
-        break;
-      case 'jobHolder':
-        updateDataWithExistingFields.jobHolderDocuments = visaApplication.jobHolderDocuments ? { ...visaApplication.jobHolderDocuments } : {};
-        break;
-      case 'business':
-        updateDataWithExistingFields.businessDocuments = visaApplication.businessDocuments ? { ...visaApplication.businessDocuments } : {};
-        break;
-      case 'other':
-        updateDataWithExistingFields.otherDocuments = visaApplication.otherDocuments ? { ...visaApplication.otherDocuments } : {};
-        break;
-    }
+  // Initialize new document type object based on new visa type
+  switch (updateData.visaType) {
+    case 'student':
+      updateDataWithExistingFields.studentDocuments = {} as IStudentDocuments;
+      updateDataWithExistingFields.jobHolderDocuments = undefined;
+      updateDataWithExistingFields.businessDocuments = undefined;
+      updateDataWithExistingFields.otherDocuments = undefined;
+      break;
+    case 'jobHolder':
+      updateDataWithExistingFields.studentDocuments = undefined;
+      updateDataWithExistingFields.jobHolderDocuments = {} as IJobHolderDocuments;
+      updateDataWithExistingFields.businessDocuments = undefined;
+      updateDataWithExistingFields.otherDocuments = undefined;
+      break;
+    case 'business':
+      updateDataWithExistingFields.studentDocuments = undefined;
+      updateDataWithExistingFields.jobHolderDocuments = undefined;
+      updateDataWithExistingFields.businessDocuments = {} as IBusinessDocuments;
+      updateDataWithExistingFields.otherDocuments = undefined;
+      break;
+    case 'other':
+      updateDataWithExistingFields.studentDocuments = undefined;
+      updateDataWithExistingFields.jobHolderDocuments = undefined;
+      updateDataWithExistingFields.businessDocuments = undefined;
+      updateDataWithExistingFields.otherDocuments = {} as IOtherDocuments;
+      break;
   }
 
   // Then handle file uploads if any
@@ -271,6 +234,7 @@ const updateVisaApplication = async (
   }
 
   // Create MongoDB update object with explicit unset operations
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mongoUpdateObject: any = {
     $set: {
       givenName: updateDataWithExistingFields.givenName,
@@ -429,90 +393,52 @@ const updateSubTraveler = async (
       throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
     }
 
-    // Initialize update data with existing fields
-    let updateDataWithExistingFields = {
-      givenName: updateData.givenName || subTraveler.givenName,
-      surname: updateData.surname || subTraveler.surname,
-      phone: updateData.phone || subTraveler.phone,
-      email: updateData.email || subTraveler.email,
-      address: updateData.address || subTraveler.address,
-      notes: updateData.notes || subTraveler.notes,
-      visaType: updateData.visaType || subTraveler.visaType,
-      // Initialize all documents as undefined
-      generalDocuments: undefined,
-      studentDocuments: undefined,
-      jobHolderDocuments: undefined,
-      businessDocuments: undefined,
-      otherDocuments: undefined
+    // Create update data object with existing fields
+    const updateDataWithExistingFields: Partial<IVisaForm> = {
+      givenName: subTraveler.givenName,
+      surname: subTraveler.surname,
+      phone: subTraveler.phone,
+      email: subTraveler.email,
+      address: subTraveler.address,
+      notes: subTraveler.notes,
+      visaType: updateData.visaType,
+      generalDocuments: {
+        passportCopy: subTraveler.generalDocuments?.passportCopy || {} as IFile,
+        passportPhoto: subTraveler.generalDocuments?.passportPhoto || {} as IFile,
+        bankStatement: subTraveler.generalDocuments?.bankStatement || {} as IFile,
+        bankSolvency: subTraveler.generalDocuments?.bankSolvency || {} as IFile,
+        visitingCard: subTraveler.generalDocuments?.visitingCard || {} as IFile,
+        hotelBooking: subTraveler.generalDocuments?.hotelBooking || {} as IFile,
+        airTicket: subTraveler.generalDocuments?.airTicket || {} as IFile,
+      } as IGeneralDocuments
     };
 
-    // First, handle visa type change if needed
-    if (updateData.visaType && updateData.visaType !== subTraveler.visaType) {
-      console.log('Visa type changed from', subTraveler.visaType, 'to', updateData.visaType);
-      
-      // Function to safely delete documents and log results
-      const deleteDocuments = async (documents: Record<string, IFile> | undefined, type: string) => {
-        if (documents) {
-          console.log(`Deleting ${type} documents:`, documents);
-          for (const [key, file] of Object.entries(documents)) {
-            if (file?.id) {
-              try {
-                console.log(`Attempting to delete ${type} document: ${key} with ID: ${file.id}`);
-                const result = await cloudinaryDestroyOneByOne(file.id);
-                console.log(`Delete result for ${key}:`, result);
-              } catch (error) {
-                console.error(`Error deleting ${type} document ${key}:`, error);
-              }
-            }
-          }
-        }
-      };
-
-      // Delete ALL type-specific documents
-      await Promise.all([
-        deleteDocuments(subTraveler.studentDocuments, 'student'),
-        deleteDocuments(subTraveler.jobHolderDocuments, 'jobHolder'),
-        deleteDocuments(subTraveler.businessDocuments, 'business'),
-        deleteDocuments(subTraveler.otherDocuments, 'other')
-      ]);
-
-      // Copy only general documents
-      updateDataWithExistingFields.generalDocuments = subTraveler.generalDocuments ? { ...subTraveler.generalDocuments } : {};
-
-      // Initialize new document type object based on new visa type
-      switch (updateData.visaType) {
-        case 'student':
-          updateDataWithExistingFields.studentDocuments = {};
-          break;
-        case 'jobHolder':
-          updateDataWithExistingFields.jobHolderDocuments = {};
-          break;
-        case 'business':
-          updateDataWithExistingFields.businessDocuments = {};
-          break;
-        case 'other':
-          updateDataWithExistingFields.otherDocuments = {};
-          break;
-      }
-    } else {
-      // If visa type hasn't changed, copy existing documents
-      updateDataWithExistingFields.generalDocuments = subTraveler.generalDocuments ? { ...subTraveler.generalDocuments } : {};
-      
-      // Only copy documents for current visa type
-      switch (updateDataWithExistingFields.visaType) {
-        case 'student':
-          updateDataWithExistingFields.studentDocuments = subTraveler.studentDocuments ? { ...subTraveler.studentDocuments } : {};
-          break;
-        case 'jobHolder':
-          updateDataWithExistingFields.jobHolderDocuments = subTraveler.jobHolderDocuments ? { ...subTraveler.jobHolderDocuments } : {};
-          break;
-        case 'business':
-          updateDataWithExistingFields.businessDocuments = subTraveler.businessDocuments ? { ...subTraveler.businessDocuments } : {};
-          break;
-        case 'other':
-          updateDataWithExistingFields.otherDocuments = subTraveler.otherDocuments ? { ...subTraveler.otherDocuments } : {};
-          break;
-      }
+    // Initialize new document type object based on new visa type
+    switch (updateData.visaType) {
+      case 'student':
+        updateDataWithExistingFields.studentDocuments = {} as IStudentDocuments;
+        updateDataWithExistingFields.jobHolderDocuments = undefined;
+        updateDataWithExistingFields.businessDocuments = undefined;
+        updateDataWithExistingFields.otherDocuments = undefined;
+        break;
+      case 'jobHolder':
+        updateDataWithExistingFields.studentDocuments = undefined;
+        updateDataWithExistingFields.jobHolderDocuments = {} as IJobHolderDocuments;
+        updateDataWithExistingFields.businessDocuments = undefined;
+        updateDataWithExistingFields.otherDocuments = undefined;
+        break;
+      case 'business':
+        updateDataWithExistingFields.studentDocuments = undefined;
+        updateDataWithExistingFields.jobHolderDocuments = undefined;
+        updateDataWithExistingFields.businessDocuments = {} as IBusinessDocuments;
+        updateDataWithExistingFields.otherDocuments = undefined;
+        break;
+      case 'other':
+        updateDataWithExistingFields.studentDocuments = undefined;
+        updateDataWithExistingFields.jobHolderDocuments = undefined;
+        updateDataWithExistingFields.businessDocuments = undefined;
+        updateDataWithExistingFields.otherDocuments = {} as IOtherDocuments;
+        break;
     }
 
     // Then handle file uploads if any
@@ -527,6 +453,7 @@ const updateSubTraveler = async (
     }
 
     // Create MongoDB update object with explicit unset operations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mongoUpdateObject: any = {
       $set: {
         'subTravelers.$.givenName': updateDataWithExistingFields.givenName,

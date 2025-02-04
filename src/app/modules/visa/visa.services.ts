@@ -6,6 +6,10 @@ import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { extractDocuments, prepareVisaApplicationData, processAndUploadFiles, updateDocumentField } from "./visa.utils";
 import { 
   IFile,
+  IGeneralDocuments,
+  IJobHolderDocuments,
+  IOtherDocuments,
+  IStudentDocuments,
   // IGeneralDocuments,
   IVisaForm
 } from "./visa.interface";
@@ -346,7 +350,8 @@ const updateSubTraveler = async (
     );
 
 
-    console.log(subTraveler);
+    // console.log(subTraveler);
+    console.log(processedFiles)
 
     if (!subTraveler) {
       throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
@@ -372,14 +377,38 @@ const updateSubTraveler = async (
     let newUploadedFiles: Record<string, IFile> = {};
 
     if (processedFiles && Object.keys(processedFiles).length > 0) {
+      // Delete existing files that are being replaced
+      for (const [key] of Object.entries(processedFiles)) {
+        const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
+        
+        // Find and delete the existing file based on document type
+        let existingFile: IFile | undefined;
+        
+        if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
+          existingFile = subTraveler.generalDocuments?.[documentKey as keyof IGeneralDocuments];
+        } 
+        else if (documentKey.match(/^(studentId|travelLetter|birthCertificate)$/)) {
+          existingFile = subTraveler.studentDocuments?.[documentKey as keyof IStudentDocuments];
+        }
+        else if (documentKey.match(/^(nocCertificate|officialId|bmdcCertificate|barCouncilCertificate|retirementCertificate)$/)) {
+          existingFile = subTraveler.jobHolderDocuments?.[documentKey as keyof IJobHolderDocuments];
+        }
+        else if (documentKey.match(/^(marriageCertificate)$/)) {
+          existingFile = subTraveler.otherDocuments?.[documentKey as keyof IOtherDocuments];
+        }
+
+        // Delete the file if it exists
+        if (existingFile?.id) {
+          await cloudinaryDestroyOneByOne(existingFile.id);
+        }
+      }
+
       // Upload new files
       newUploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
       
       // Process uploaded files
       for (const [key, value] of Object.entries(newUploadedFiles)) {
-        // Handle both formats: subTraveler_documentType and subTravelerN_documentType
         const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
-
         updateDocumentField(documentKey, value, updateDataWithExistingFields, subTraveler);
       }
     }

@@ -117,6 +117,7 @@ export const updateDocumentField = (
   value: IFile,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   targetData: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   existingData: Partial<IVisaForm>
 ) => {
   // Always use the targetData's visa type instead of existingData's

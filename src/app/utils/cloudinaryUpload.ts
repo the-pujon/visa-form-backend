@@ -35,7 +35,7 @@ export const cloudinaryUpload = (imageName: string, path: string, email: string)
           // console.log(result)
           resolve(result);
           // console.log("Upload successful")
-          //   console.log(result)
+            // console.log(result)
 
           fs.unlink(path, (err) => {
             if (err) throw err;

@@ -196,34 +196,40 @@ const updateVisaApplication = async (
     } as IGeneralDocuments
   };
 
-  // let oldVisaTypeDoc;
+  let oldVisaTypeDoc;
 
-  // if(updateData.visaType){
-  //   if(updateData.visaType !== visaApplication.visaType){
-  //     switch (visaApplication.visaType) {
-  //       case 'student':
-  //         oldVisaTypeDoc = visaApplication.studentDocuments;
-  //         break;
-  //       case 'jobHolder':
-  //         oldVisaTypeDoc = visaApplication.jobHolderDocuments;
-  //         break;
-  //       case 'business':
-  //         oldVisaTypeDoc = visaApplication.businessDocuments;
-  //         break;
-  //       case 'other':
-  //         oldVisaTypeDoc = visaApplication.otherDocuments;
-  //         break; 
-  //     }
-  //   }
-  // }
+  if(updateData.visaType){
+    if(updateData.visaType !== visaApplication.visaType){
+      switch (visaApplication.visaType) {
+        case 'student':
+          oldVisaTypeDoc = visaApplication.studentDocuments;
+          break;
+        case 'jobHolder':
+          oldVisaTypeDoc = visaApplication.jobHolderDocuments;
+          break;
+        case 'business':
+          oldVisaTypeDoc = visaApplication.businessDocuments;
+          break;
+        case 'other':
+          oldVisaTypeDoc = visaApplication.otherDocuments;
+          break; 
+      }
+    }
+  }
 
-  // if(oldVisaTypeDoc){
-  //   // console.log("oldVisaTypeDoc==", oldVisaTypeDoc)
-  //  const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
-  //  for(const [key, value] of Object.entries(oldVisaTypeDocPlain)){
-  //   console.log("doc", value)
-  //  }
-  // }
+  if(oldVisaTypeDoc){
+    // console.log("oldVisaTypeDoc==", oldVisaTypeDoc)
+   const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
+   for(const [key, value] of Object.entries(oldVisaTypeDocPlain)){
+    
+    if(key !== '_id'){
+      // console.log( value)
+    // console.log("doc", value.id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await cloudinaryDestroyOneByOne((value as any).id)
+    }
+   }
+  }
 
   // Initialize new document type object based on new visa type
   // Only change document types if visa type has changed

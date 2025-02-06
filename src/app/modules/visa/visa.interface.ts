@@ -39,6 +39,8 @@ export interface IJobHolderDocuments extends Document {
 export interface IOtherDocuments extends Document {
   marriageCertificate: IFile;
 }
+
+export type IVisaType = 'business' | 'student' | 'jobHolder' | 'other' | '';
   
 export interface IVisaForm extends Document {
     // _id?: string;

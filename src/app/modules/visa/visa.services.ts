@@ -173,9 +173,6 @@ const updateVisaApplication = async (
     throw new AppError(httpStatus.NOT_FOUND, 'Visa application not found');
   }
 
-  console.log(updateData)
-  console.log(processedFiles)
-
   // Create update data object with existing fields
   const updateDataWithExistingFields: Partial<IVisaForm> = {
     givenName: visaApplication.givenName,
@@ -218,13 +215,10 @@ const updateVisaApplication = async (
   }
 
   if(oldVisaTypeDoc){
-    // console.log("oldVisaTypeDoc==", oldVisaTypeDoc)
    const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
    for(const [key, value] of Object.entries(oldVisaTypeDocPlain)){
     
     if(key !== '_id'){
-      // console.log( value)
-    // console.log("doc", value.id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await cloudinaryDestroyOneByOne((value as any).id)
     }
@@ -528,6 +522,69 @@ const updateSubTraveler = async (
 
     // Then handle file uploads if any
     if (processedFiles && Object.keys(processedFiles).length > 0) {
+      // Delete existing files that are being replaced
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for (const [key, _] of Object.entries(processedFiles)) {
+        const documentKey = key.replace(/^subTraveler(?:\d+)?_/, '');
+        
+        // Find the existing file in the appropriate document section
+        let existingFile: IFile | undefined;
+
+        // Check in general documents
+        if (documentKey in (subTraveler.generalDocuments || {})) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          existingFile = (subTraveler.generalDocuments as any)[documentKey];
+        }
+        // Check in visa type specific documents
+        else {
+          const documentType = `${subTraveler.visaType}Documents` as keyof IVisaForm;
+          const documents = subTraveler[documentType];
+          if (documents && typeof documents === 'object' && documentKey in documents) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            existingFile = (documents as any)[documentKey];
+          }
+        }
+
+        // Delete the existing file if found
+        if (existingFile?.id) {
+          try {
+            await cloudinaryDestroyOneByOne(existingFile.id);
+            console.log(`Successfully deleted old file: ${existingFile.id}`);
+          } catch (error) {
+            console.error(`Error deleting old file: ${existingFile.id}`, error);
+          }
+        }
+      }
+
+      // Handle visa type change file cleanup
+      let oldVisaTypeDoc;
+      if (updateData.visaType && updateData.visaType !== subTraveler.visaType) {
+        switch (subTraveler.visaType) {
+          case 'student':
+            oldVisaTypeDoc = subTraveler.studentDocuments;
+            break;
+          case 'jobHolder':
+            oldVisaTypeDoc = subTraveler.jobHolderDocuments;
+            break;
+          case 'business':
+            oldVisaTypeDoc = subTraveler.businessDocuments;
+            break;
+          case 'other':
+            oldVisaTypeDoc = subTraveler.otherDocuments;
+            break;
+        }
+
+        if (oldVisaTypeDoc) {
+          const oldVisaTypeDocPlain = oldVisaTypeDoc;
+          for (const [key, value] of Object.entries(oldVisaTypeDocPlain)) {
+            if (key !== '_id') {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await cloudinaryDestroyOneByOne((value as any).id);
+            }
+          }
+        }
+      }
+
       const newUploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
       
       // Process uploaded files based on current visa type
@@ -586,7 +643,7 @@ const updateSubTraveler = async (
       delete mongoUpdateObject.$unset;
     }
 
-    console.log('MongoDB update object:', JSON.stringify(mongoUpdateObject, null, 2));
+    // console.log('MongoDB update object:', JSON.stringify(mongoUpdateObject, null, 2));
 
     // Update the sub-traveler with explicit unset operations
     const result = await VisaModel.findOneAndUpdate(

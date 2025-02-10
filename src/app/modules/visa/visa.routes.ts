@@ -45,6 +45,11 @@ const getUploadFields = () => {
       name: new RegExp(`^subTraveler\\d+_${docType}$`),
       maxCount: 1
     });
+      // Match sub-travelers with ID format: subTraveler_<mongoId>_<docType>
+      fields.push({
+        name: new RegExp(`^subTraveler_[a-fA-F0-9]{24}_${docType}$`), // Matches MongoDB ObjectId
+        maxCount: 1
+      });
   });
 
   return fields;
@@ -124,6 +129,23 @@ router.put(
 router.get(
   "/:visaId/sub-traveler/:subTravelerId",
   VisaController.getSubTravelerById
+);
+
+router.put(
+  "/:visaId/primary-traveler",
+  handleMultipleFiles(getUploadFields()),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (typeof req.body.data === 'string') {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  validateRequest(updateVisaValidationSchema),
+  VisaController.updatePrimaryTraveler
 );
 
 export const visaRoutes = router;

@@ -9,6 +9,11 @@ cloudinary.config({
 });
 
 export const cloudinaryUpload = (imageName: string, path: string, email: string) => {
+  // Check if file exists before attempting upload
+  if (!fs.existsSync(path)) {
+    return Promise.reject(new Error(`File not found at path: ${path}`));
+  }
+
   const fileExtension = path.split('.').pop()?.toLowerCase();
   const uploadOptions = {
     public_id: imageName,
@@ -29,17 +34,19 @@ export const cloudinaryUpload = (imageName: string, path: string, email: string)
       uploadOptions,
       (err, result) => {
         if (err) {
-          // console.error("error uploading image", err)
+          console.error("Error uploading to cloudinary:", err);
           reject(err);
         } else {
           // console.log(result)
           resolve(result);
-          // console.log("Upload successful")
-            // console.log(result)
-
-          fs.unlink(path, (err) => {
-            if (err) throw err;
-            console.log('File deleted!');
+          
+          // Delete file after successful upload
+          fs.unlink(path, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error('Error deleting file after upload:', unlinkErr);
+            } else {
+              console.log('File uploaded and deleted successfully');
+            }
           });
         }
       },

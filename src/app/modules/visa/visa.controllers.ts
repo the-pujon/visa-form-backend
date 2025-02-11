@@ -108,14 +108,16 @@ const getSubTravelerById = catchAsync(async (req: Request, res: Response) => {
 
 const updatePrimaryTraveler = catchAsync(async (req: Request, res: Response) => {
   const { visaId } = req.params;
-  const result = await VisaServices.updatePrimaryTraveler(visaId, req.body, req.processedFiles!);
+  const newTraveler = req.body.newTraveler;
+  console.log("newTraveler", newTraveler);
+  // const result = await VisaServices.updatePrimaryTraveler(visaId, req.body, req.processedFiles!);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Primary traveler updated successfully",
-    data: result,
-  });
+  // sendResponse(res, {
+  //   statusCode: httpStatus.OK,
+  //   success: true,
+  //   message: "Primary traveler updated successfully",
+  //   data: result,
+  // });
 });
 
 export const VisaController = {

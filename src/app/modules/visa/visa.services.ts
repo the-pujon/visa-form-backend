@@ -708,10 +708,10 @@ const updatePrimaryTraveler = async (
   const finalUpdateData = {
     ...updateData,
     generalDocuments: updateData.generalDocuments || { ...visaApplication.generalDocuments?.toObject() },
-    businessDocuments: updateData.businessDocuments || { ...visaApplication.businessDocuments?.toObject() },
-    studentDocuments: updateData.studentDocuments || { ...visaApplication.studentDocuments?.toObject() },
-    jobHolderDocuments: updateData.jobHolderDocuments || { ...visaApplication.jobHolderDocuments?.toObject() },
-    otherDocuments: updateData.otherDocuments || { ...visaApplication.otherDocuments?.toObject() },
+    // businessDocuments: updateData.businessDocuments || { ...visaApplication.businessDocuments?.toObject() },
+    // studentDocuments: updateData.studentDocuments || { ...visaApplication.studentDocuments?.toObject() },
+    // jobHolderDocuments: updateData.jobHolderDocuments || { ...visaApplication.jobHolderDocuments?.toObject() },
+    // otherDocuments: updateData.otherDocuments || { ...visaApplication.otherDocuments?.toObject() },
     subTravelers: updateData.subTravelers || (visaApplication.subTravelers ? [...visaApplication.subTravelers] : [])
   };
 
@@ -721,14 +721,11 @@ const updatePrimaryTraveler = async (
     const newUploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
     // console.log("newUploadedFiles", newUploadedFiles);
     let oldVisaTypeDoc;
+    let oldSubTravelerVisaTypeDoc;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, _] of Object.entries(processedFiles)) {
       if (key.includes('primaryTraveler_')) {
         const documentKey = key.replace(/^primaryTraveler_/, '');
-        // console.log("documentKey", documentKey)
-
-        // console.log(documentKey in (visaApplication.generalDocuments || {}))
-        // console.log(visaApplication.generalDocuments)
 
         // Find the existing file in the appropriate document section
         let existingFile: IFile | undefined;
@@ -745,8 +742,6 @@ const updatePrimaryTraveler = async (
           existingFile = (visaApplication.otherDocuments as never)[documentKey];
         }
 
-        // console.log("existing file main traveler", existingFile)
-
         // Delete the existing file from Cloudinary if it exists
         if (existingFile?.id) {
           try {
@@ -756,8 +751,6 @@ const updatePrimaryTraveler = async (
             console.error(`Failed to delete file ${existingFile.id} from Cloudinary:`, error);
           }
         }
-
-        
 
         if (updateData.visaType) {
           if (updateData.visaType !== visaApplication.visaType) {
@@ -810,10 +803,10 @@ const updatePrimaryTraveler = async (
           }
         } else {
           // Keep existing document data if visa type hasn't changed
-          finalUpdateData.studentDocuments = visaApplication.studentDocuments;
-          finalUpdateData.jobHolderDocuments = visaApplication.jobHolderDocuments;
-          finalUpdateData.businessDocuments = visaApplication.businessDocuments;
-          finalUpdateData.otherDocuments = visaApplication.otherDocuments;
+          finalUpdateData.studentDocuments = visaApplication.studentDocuments? visaApplication.studentDocuments : undefined;
+          finalUpdateData.jobHolderDocuments = visaApplication.jobHolderDocuments? visaApplication.jobHolderDocuments : undefined;
+          finalUpdateData.businessDocuments = visaApplication.businessDocuments? visaApplication.businessDocuments : undefined;
+          finalUpdateData.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
 
         // Process uploaded files based on current visa type
@@ -836,25 +829,93 @@ const updatePrimaryTraveler = async (
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const subTraveler = visaApplication.subTravelers?.find((subTraveler: any) => subTraveler._id.toString() === subTravelerId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updatedSubTraveler = finalUpdateData.subTravelers?.find((subTraveler: any) => subTraveler._id.toString() === subTravelerId);
+
+
         // console.log("subTraveler", subTraveler);
-        if (!subTraveler) {
+        if (!subTraveler && !updatedSubTraveler) {
           throw new AppError(httpStatus.NOT_FOUND, 'Sub-traveler not found');
+        }
+
+
+        const existingSubTraveler = {
+          ...updatedSubTraveler,
+          generalDocuments: updatedSubTraveler?.generalDocuments || { ...subTraveler?.generalDocuments },
+        }
+
+        // console.log("existingSubTraveler", existingSubTraveler);
+        if (existingSubTraveler.visaType) {
+          if (existingSubTraveler.visaType !== subTraveler!.visaType) {
+            switch (subTraveler!.visaType) {
+              case 'student':
+                oldSubTravelerVisaTypeDoc = subTraveler!.studentDocuments;
+                break;
+              case 'jobHolder':
+                oldSubTravelerVisaTypeDoc = subTraveler!.jobHolderDocuments;
+                break;
+              case 'business':
+                oldSubTravelerVisaTypeDoc = subTraveler!.businessDocuments;
+                break;
+              case 'other':
+                oldSubTravelerVisaTypeDoc = subTraveler!.otherDocuments;
+                break;
+            }
+          }
+        }
+      
+
+
+        if (existingSubTraveler!.visaType && existingSubTraveler!.visaType !== subTraveler!.visaType) {
+          switch (updatedSubTraveler!.visaType) {
+            case 'student':
+              existingSubTraveler!.studentDocuments = existingSubTraveler!.studentDocuments || {} as IStudentDocuments;
+              existingSubTraveler!.jobHolderDocuments = undefined;
+              existingSubTraveler!.businessDocuments = undefined;
+              existingSubTraveler!.otherDocuments = undefined;
+              break;
+            case 'jobHolder':
+              existingSubTraveler!.studentDocuments = undefined;
+              existingSubTraveler!.jobHolderDocuments = existingSubTraveler!.jobHolderDocuments || {} as IJobHolderDocuments;
+              existingSubTraveler!.businessDocuments = undefined;
+              existingSubTraveler!.otherDocuments = undefined;
+              break;
+            case 'business':
+              existingSubTraveler!.studentDocuments = undefined;
+              existingSubTraveler!.jobHolderDocuments = undefined;
+              existingSubTraveler!.businessDocuments = existingSubTraveler!.businessDocuments || {} as IBusinessDocuments;
+              existingSubTraveler!.otherDocuments = undefined;
+              break;
+            case 'other':
+              existingSubTraveler!.studentDocuments = undefined;
+              existingSubTraveler!.jobHolderDocuments = undefined;
+              existingSubTraveler!.businessDocuments = undefined;
+              existingSubTraveler!.otherDocuments = existingSubTraveler!.otherDocuments || {} as IOtherDocuments;
+              break;
+          }
+        } else {
+          // console.log(visaApplication)
+          // Keep existing document data if visa type hasn't changed
+          existingSubTraveler!.studentDocuments = visaApplication.studentDocuments?  visaApplication.studentDocuments : undefined;
+          existingSubTraveler!.jobHolderDocuments = visaApplication.jobHolderDocuments? visaApplication.jobHolderDocuments : undefined;
+          existingSubTraveler!.businessDocuments = visaApplication.businessDocuments? visaApplication.businessDocuments : undefined;
+          existingSubTraveler!.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
 
         // console.log("subTraveler", subTraveler);
 
         let existingFile: IFile | undefined;
 
-        if (lastDocKey in (subTraveler.generalDocuments || {})) {
-          existingFile = (subTraveler.generalDocuments as never)[lastDocKey];
-        } else if (lastDocKey in (subTraveler.studentDocuments || {})) {
-          existingFile = (subTraveler.studentDocuments as never)[lastDocKey];
-        } else if (lastDocKey in (subTraveler.jobHolderDocuments || {})) {
-          existingFile = (subTraveler.jobHolderDocuments as never)[lastDocKey];
-        } else if (lastDocKey in (subTraveler.businessDocuments || {})) {
-          existingFile = (subTraveler.businessDocuments as never)[lastDocKey];
-        } else if (lastDocKey in (subTraveler.otherDocuments || {})) {
-          existingFile = (subTraveler.otherDocuments as never)[lastDocKey];
+        if (lastDocKey in (existingSubTraveler!.generalDocuments || {})) {
+          existingFile = (existingSubTraveler!.generalDocuments as never)[lastDocKey];
+        } else if (lastDocKey in (existingSubTraveler!.studentDocuments || {})) {
+          existingFile = (existingSubTraveler!.studentDocuments as never)[lastDocKey];
+        } else if (lastDocKey in (existingSubTraveler!.jobHolderDocuments || {})) {
+          existingFile = (existingSubTraveler!.jobHolderDocuments as never)[lastDocKey];
+        } else if (lastDocKey in (existingSubTraveler!.businessDocuments || {})) {
+          existingFile = (existingSubTraveler!.businessDocuments as never)[lastDocKey];
+        } else if (lastDocKey in (existingSubTraveler!.otherDocuments || {})) {
+          existingFile = (existingSubTraveler!.otherDocuments as never)[lastDocKey];
         }
         // Delete the existing file from Cloudinary if it exists
         if (existingFile?.id) {
@@ -865,16 +926,17 @@ const updatePrimaryTraveler = async (
             console.error(`Failed to delete file ${existingFile.id} from Cloudinary:`, error);
           }
         }
-
+// console.log("key", key)
         // Use the already uploaded file
         const value = newUploadedFiles[key];
         if (value) {
-          updateDocumentField(lastDocKey, value, subTraveler, subTraveler);
+          updateDocumentField(lastDocKey, value, existingSubTraveler, existingSubTraveler as IVisaForm);
         }
 
         // Update the sub-traveler in the finalUpdateData
-        finalUpdateData.subTravelers = finalUpdateData.subTravelers.map((st: IVisaForm) =>
-          st._id === subTravelerId ? subTraveler : st
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (finalUpdateData.subTravelers as any) = finalUpdateData.subTravelers.map((st: IVisaForm) =>
+          st._id === subTravelerId ? existingSubTraveler : st
         );
       }
     }
@@ -896,8 +958,20 @@ const updatePrimaryTraveler = async (
       }
     }
 
-  }
 
+    if (oldSubTravelerVisaTypeDoc) {
+      // const oldVisaTypeDocPlain = oldVisaTypeDoc;
+      for (const [key, value] of Object.entries(oldSubTravelerVisaTypeDoc)) {
+  
+        if (key !== '_id') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await cloudinaryDestroyOneByOne((value as any).id)
+        }
+      }
+    }
+
+  }
+// console.log(finalUpdateData.subTravelers[0])
 
 
   const result = await VisaModel.findOneAndReplace({_id: visaId}, finalUpdateData, {

@@ -3,24 +3,29 @@ import { VisaController } from "./visa.controllers";
 import { handleMultipleFiles } from "../../utils/fileUpload";
 import validateRequest from "../../middlewares/validateRequest";
 import { updateVisaValidationSchema, visaValidationSchema } from "./visa.validation";
+import { IVisaForm } from "./visa.interface";
 // import { visaValidationSchema } from "./visa.validation";
+
+interface CustomRequest extends Request {
+  newTraveler?: IVisaForm; // Change `any` to a specific type if possible
+}
 
 const router = Router();
 
 const getUploadFields = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fields:any[] = [];
-  
+  const fields: any[] = [];
+
   const documentTypes = [
     // General Documents
-    'passportCopy', 'passportPhoto', 'bankStatement', 'bankSolvency', 
+    'passportCopy', 'passportPhoto', 'bankStatement', 'bankSolvency',
     'visitingCard', 'hotelBooking', 'airTicket',
     // Business Documents
     'tradeLicense', 'notarizedId', 'memorandum', 'officePad',
     // Student Documents
     'studentId', 'travelLetter', 'birthCertificate',
     // Job Holder Documents
-    'nocCertificate', 'officialId', 'bmdcCertificate', 
+    'nocCertificate', 'officialId', 'bmdcCertificate',
     'barCouncilCertificate', 'retirementCertificate',
     // Other Documents
     'marriageCertificate'
@@ -28,28 +33,35 @@ const getUploadFields = () => {
 
   // Add primary traveler fields
   documentTypes.forEach(docType => {
-    fields.push({ 
-      name: `primaryTraveler_${docType}`, 
-      maxCount: 1 
+    fields.push({
+      name: `primaryTraveler_${docType}`,
+      maxCount: 1
     });
   });
 
   // Add fields for sub-travelers
   documentTypes.forEach(docType => {
-    fields.push({ 
-      name: `subTraveler_${docType}`, 
-      maxCount: 1 
+    fields.push({
+      name: `subTraveler_${docType}`,
+      maxCount: 1
     });
     // Also add numbered format
     fields.push({
       name: new RegExp(`^subTraveler\\d+_${docType}$`),
       maxCount: 1
     });
-      // Match sub-travelers with ID format: subTraveler_<mongoId>_<docType>
-      fields.push({
-        name: new RegExp(`^subTraveler_[a-fA-F0-9]{24}_${docType}$`), // Matches MongoDB ObjectId
-        maxCount: 1
-      });
+    // Match sub-travelers with ID format: subTraveler_<mongoId>_<docType>
+    fields.push({
+      name: new RegExp(`^subTraveler_[a-fA-F0-9]{24}_${docType}$`), // Matches MongoDB ObjectId
+      maxCount: 1
+    });
+
+    // Match sub-travelers with "new<number>_<docType>"
+    fields.push({
+      name: new RegExp(`^subTraveler_new\\d+_${docType}$`),
+      maxCount: 1
+    });
+
   });
 
   return fields;
@@ -134,12 +146,18 @@ router.get(
 router.put(
   "/:visaId/primary-traveler",
   handleMultipleFiles(getUploadFields()),
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
       if (typeof req.body.data === 'string') {
+        console.log(req.body.newTraveler)
         req.body = JSON.parse(req.body.data);
+        req.newTraveler = JSON.parse(req.body.newTraveler);
       }
-      next();
+      // if(typeof req.body.newTraveler === 'string'){
+      //   req.body.newTraveler = JSON.parse(req.body.newTraveler);
+      // }
+      // console.log(req.newTraveler)
+      // next();
     } catch (error) {
       next(error);
     }

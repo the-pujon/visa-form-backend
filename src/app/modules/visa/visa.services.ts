@@ -720,7 +720,7 @@ const updatePrimaryTraveler = async (
     // Upload all files once and store results
     const newUploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
     // console.log("newUploadedFiles", newUploadedFiles);
-
+    let oldVisaTypeDoc;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, _] of Object.entries(processedFiles)) {
       if (key.includes('primaryTraveler_')) {
@@ -757,32 +757,55 @@ const updatePrimaryTraveler = async (
           }
         }
 
+        
+
+        if (updateData.visaType) {
+          if (updateData.visaType !== visaApplication.visaType) {
+            switch (visaApplication.visaType) {
+              case 'student':
+                oldVisaTypeDoc = visaApplication.studentDocuments;
+                break;
+              case 'jobHolder':
+                oldVisaTypeDoc = visaApplication.jobHolderDocuments;
+                break;
+              case 'business':
+                oldVisaTypeDoc = visaApplication.businessDocuments;
+                break;
+              case 'other':
+                oldVisaTypeDoc = visaApplication.otherDocuments;
+                break;
+            }
+          }
+        }
+      
+       
+
         // Update document data based on new visa type
         if (updateData.visaType && updateData.visaType !== visaApplication.visaType) {
           switch (updateData.visaType) {
             case 'student':
-              finalUpdateData.studentDocuments = {} as IStudentDocuments;
+              finalUpdateData.studentDocuments = finalUpdateData.studentDocuments || {} as IStudentDocuments;
               finalUpdateData.jobHolderDocuments = undefined;
               finalUpdateData.businessDocuments = undefined;
               finalUpdateData.otherDocuments = undefined;
               break;
             case 'jobHolder':
               finalUpdateData.studentDocuments = undefined;
-              finalUpdateData.jobHolderDocuments = {} as IJobHolderDocuments;
+              finalUpdateData.jobHolderDocuments = finalUpdateData.jobHolderDocuments || {} as IJobHolderDocuments;
               finalUpdateData.businessDocuments = undefined;
               finalUpdateData.otherDocuments = undefined;
               break;
             case 'business':
               finalUpdateData.studentDocuments = undefined;
               finalUpdateData.jobHolderDocuments = undefined;
-              finalUpdateData.businessDocuments = {} as IBusinessDocuments;
+              finalUpdateData.businessDocuments = finalUpdateData.businessDocuments || {} as IBusinessDocuments;
               finalUpdateData.otherDocuments = undefined;
               break;
             case 'other':
               finalUpdateData.studentDocuments = undefined;
               finalUpdateData.jobHolderDocuments = undefined;
               finalUpdateData.businessDocuments = undefined;
-              finalUpdateData.otherDocuments = {} as IOtherDocuments;
+              finalUpdateData.otherDocuments = finalUpdateData.otherDocuments || {} as IOtherDocuments;
               break;
           }
         } else {
@@ -794,10 +817,13 @@ const updatePrimaryTraveler = async (
         }
 
         // Process uploaded files based on current visa type
+        // console.log("key", key)
         const value = newUploadedFiles[key];
         if (value) {
+          // console.log("value", value)
           updateDocumentField(documentKey, value, finalUpdateData, visaApplication);
         }
+        // console.log("finalUpdateData", finalUpdateData)
       }
       else if (key.includes('subTraveler_')) {
         // Extract subTravelerId and documentKey from the format: subTraveler_[id]_[documentKey]
@@ -859,11 +885,22 @@ const updatePrimaryTraveler = async (
     // const uploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
     // console.log(uploadedFiles)
 
+    if (oldVisaTypeDoc) {
+      const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
+      for (const [key, value] of Object.entries(oldVisaTypeDocPlain)) {
+  
+        if (key !== '_id') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await cloudinaryDestroyOneByOne((value as any).id)
+        }
+      }
+    }
 
   }
 
 
-  const result = await VisaModel.findByIdAndUpdate(visaId, finalUpdateData, {
+
+  const result = await VisaModel.findOneAndReplace({_id: visaId}, finalUpdateData, {
     new: true
   });
 

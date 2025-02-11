@@ -75,7 +75,8 @@ const visaSchema = new Schema<IVisaForm>({
   otherDocuments: { type: otherDocumentsSchema, required: false },
   subTravelers: [{ type: subTravelerSchema, required: false }]
 }, {
-  timestamps: true
+  timestamps: true,
+  minimize: true,
 });
 
 const VisaModel = mongoose.model<IVisaForm>('Visa', visaSchema);

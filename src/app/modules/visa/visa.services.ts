@@ -26,7 +26,9 @@ const createVisaApplication = async (visaData: IVisaForm, processedFiles: Proces
   if (!processedFiles || Object.keys(processedFiles).length === 0) {
     throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
   }
+  // Process and upload files
   const uploadedFiles = await processAndUploadFiles(processedFiles, visaData.email);
+  // Prepare visa application data
   const visaApplicationData = prepareVisaApplicationData(visaData, uploadedFiles);
 
   // Check if primary traveler already exists
@@ -113,13 +115,14 @@ const deleteVisaApplication = async (id: string) => {
     }
 
     const fileData: { documentType: string; url: string; id: string }[] = [];
-
+ // Extract all files from the main's documents
     fileData.push(...extractDocuments(application.toObject().generalDocuments));
     fileData.push(...extractDocuments(application.toObject().businessDocuments || {}));
     fileData.push(...extractDocuments(application.toObject().studentDocuments || {}));
     fileData.push(...extractDocuments(application.toObject().jobHolderDocuments || {}));
     fileData.push(...extractDocuments(application.toObject().otherDocuments || {}));
 
+ // Extract all files from the subtraveler's documents
     application.subTravelers?.forEach((traveler) => {
       fileData.push(...extractDocuments(traveler.generalDocuments || {}));
       fileData.push(...extractDocuments(traveler.businessDocuments || {}));
@@ -127,7 +130,7 @@ const deleteVisaApplication = async (id: string) => {
       fileData.push(...extractDocuments(traveler.jobHolderDocuments || {}));
       fileData.push(...extractDocuments(traveler.otherDocuments || {}));
     });
-
+ // Delete all files from cloudinary
     await Promise.all(
       fileData.map((file) => cloudinaryDestroyOneByOne(file.id))
     );
@@ -182,6 +185,7 @@ const updateVisaApplication = async (
     } as IGeneralDocuments
   };
 
+  //deleting the old visa type documents
   let oldVisaTypeDoc;
 
   if (updateData.visaType) {
@@ -742,6 +746,7 @@ const updatePrimaryTraveler = async (
           }
         }
 
+        //for deleting old visa type document
         if (updateData.visaType) {
           if (updateData.visaType !== visaApplication.visaType) {
             switch (visaApplication.visaType) {
@@ -797,7 +802,7 @@ const updatePrimaryTraveler = async (
           finalUpdateData.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
 
-        // Process uploaded files based on current visa type
+        // Process uploaded files for main traveler
         const value = newUploadedFiles[key];
         if (value) {
           updateDocumentField(documentKey, value, finalUpdateData, visaApplication);
@@ -810,11 +815,13 @@ const updatePrimaryTraveler = async (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newSubTraveler = newTraveler?.find((subTraveler: any) => subTraveler.id.toString() === subTravelerId);
 
+        // Process uploaded files for new sub travelers
         const value = newUploadedFiles[key];
         if (value) {
           updateDocumentField(lastDocKey, value, newSubTraveler as Partial<IVisaForm>, newSubTraveler as IVisaForm);
         }
 
+        // Create new sub traveler if not already processed
         if (newSubTraveler && !processedSubTravelerIds.has(subTravelerId)) {
           processedSubTravelerIds.add(subTravelerId);
           
@@ -865,11 +872,13 @@ const updatePrimaryTraveler = async (
           throw new AppError(httpStatus.NOT_FOUND, 'Sub-traveler not found');
         }
 
+        //create existing sub traveler
         const existingSubTraveler = {
           ...updatedSubTraveler,
           generalDocuments: updatedSubTraveler?.generalDocuments || { ...subTraveler?.generalDocuments },
         }
 
+        //for deleting old visa type document for sub traveler
         if (existingSubTraveler.visaType) {
           if (existingSubTraveler.visaType !== subTraveler!.visaType) {
             switch (subTraveler!.visaType) {
@@ -889,6 +898,8 @@ const updatePrimaryTraveler = async (
           }
         }
       
+
+        //for updating visa type document for sub traveler
         if (existingSubTraveler!.visaType && existingSubTraveler!.visaType !== subTraveler!.visaType) {
           switch (updatedSubTraveler!.visaType) {
             case 'student':
@@ -924,6 +935,7 @@ const updatePrimaryTraveler = async (
           existingSubTraveler!.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
         
+          // Find the existing file in the appropriate document section
         let existingFile: IFile | undefined;
 
         if (lastDocKey in (existingSubTraveler!.generalDocuments || {})) {
@@ -960,6 +972,7 @@ const updatePrimaryTraveler = async (
       }
     }
 
+    //for deleting old visa type document for main traveler
     if (oldVisaTypeDoc) {
       const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
       for (const [key, value] of Object.entries(oldVisaTypeDocPlain)) {
@@ -971,6 +984,7 @@ const updatePrimaryTraveler = async (
       }
     }
 
+    //for deleting old sub traveler visa type document
     if (oldSubTravelerVisaTypeDoc) {
       for (const [key, value] of Object.entries(oldSubTravelerVisaTypeDoc)) {
   
@@ -992,6 +1006,8 @@ const updatePrimaryTraveler = async (
     // Combine existing and new sub-travelers
     finalUpdateData.subTravelers = [...existingSubTravelers, ...newSubTravelerArray];
   }
+
+  //replacing the visa application with ready body
   const result = await VisaModel.findOneAndReplace({_id: visaId}, finalUpdateData, {
     new: true
   });

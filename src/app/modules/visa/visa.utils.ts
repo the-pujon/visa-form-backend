@@ -1,11 +1,11 @@
-// Helper function to process document files
+
 
 import AppError from "../../errors/AppError";
 import { ProcessedFiles } from "../../interfaces/fileUpload";
 import { cloudinaryUpload } from "../../utils/cloudinaryUpload";
 import { IFile, IVisaForm } from "./visa.interface";
 import httpStatus from "http-status";
-
+// Helper function to process document files
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const processDocumentFile = (traveler: any, documentKey: string, value: IFile, visaType: string) => {
     if (documentKey.match(/^(passportCopy|passportPhoto|bankStatement|bankSolvency|visitingCard|hotelBooking|airTicket)$/)) {
@@ -22,6 +22,7 @@ export const processDocumentFile = (traveler: any, documentKey: string, value: I
   };
 
 
+  // Helper function to process and upload files
  export const processAndUploadFiles = async (processedFiles: ProcessedFiles, email: string) => {
     const uploadedFiles: { [key: string]: IFile } = {};
   
@@ -46,6 +47,7 @@ export const processDocumentFile = (traveler: any, documentKey: string, value: I
   };
 
 
+  // Helper function to prepare visa application data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   export const prepareVisaApplicationData = (visaData: any, uploadedFiles: { [key: string]: IFile }) => {
     const visaApplicationData = {

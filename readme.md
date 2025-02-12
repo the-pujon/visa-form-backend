@@ -1,1 +1,26 @@
-## Live Link: https://crud-manager-49j9.onrender.com
+for running locally:
+```
+npm install
+npm run dev
+```
+
+
+Environment Variables:
+```
+BCRYPT_SALT_ROUNDS=
+NODE_ENV=production
+PORT=4000
+DATABASE_URL=
+JWT_ACCESS_SECRET=
+REDIS_TTL=
+REDIS_CACHE_KEY_PREFIX=
+REDIS_HOST=
+REDIS_PORT=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_API_KEY=
+CLOUDINARY_CLOUD_NAME=
+FRONTEND_URL=
+REDIS_PASSWORD=
+```
+
+Local Link: http://localhost:4000/api/visa

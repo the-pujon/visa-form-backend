@@ -670,15 +670,24 @@ const getSubTravelerById = async (visaId: string, subTravelerId: string) => {
 }
 
 
+
+/**
+ * Updates a primary traveler in a visa application. Handles
+ * updating the primary traveler's documents and visa type, as well as
+ * adding or updating sub-travelers and their documents and visa types.
+ *
+ * @param {string} visaId - The ID of the visa application
+ * @param {Partial<IVisaForm>} updateData - The updated data for the primary traveler                                  
+ * @param {Partial<IVisaForm>[]} newTraveler - The new sub-travelers to add
+ * @param {ProcessedFiles} [processedFiles] - The files that have been uploaded and processed                
+ * @returns {Promise<IVisaForm | null>} - The updated visa application
+ */
 const updatePrimaryTraveler = async (
   visaId: string,
   updateData: Partial<IVisaForm>,
   newTraveler: Partial<IVisaForm>[],
   processedFiles?: ProcessedFiles
 ): Promise<IVisaForm | null> => {
-
-  // console.log("updateData", updateData)
-
   // Find the visa application
   const visaApplication = await VisaModel.findById(visaId);
   if (!visaApplication) {
@@ -914,6 +923,7 @@ const updatePrimaryTraveler = async (
           existingSubTraveler!.businessDocuments = visaApplication.businessDocuments? visaApplication.businessDocuments : undefined;
           existingSubTraveler!.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
+        
         let existingFile: IFile | undefined;
 
         if (lastDocKey in (existingSubTraveler!.generalDocuments || {})) {

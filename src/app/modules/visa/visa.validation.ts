@@ -64,11 +64,12 @@ export const visaValidationSchema = z.object({
 
 export const updateVisaValidationSchema = z.object({
   body: z.object({
-    givenName: z.string().min(1, 'Given name is required').optional(),
-    surname: z.string().min(1, 'Surname is required').optional(),
-    phone: z.string().min(1, 'Phone number is required').optional(),
-    email: z.string().email('Invalid email format').optional(),
-    address: z.string().min(1, 'Address is required').optional(),
+    data: z.object({
+      givenName: z.string().min(1, 'Given name is required').optional(),
+    surname: z.string().min(1, 'Surname is required'),
+    phone: z.string().min(1, 'Phone number is required'),
+    email: z.string().email('Invalid email format'),
+    address: z.string().min(1, 'Address is required'),
     notes: z.string().optional(),
     visaType: z.enum(['business', 'student', 'jobHolder', 'other']).optional(),
     generalDocuments: generalDocumentsSchema.optional(),
@@ -76,7 +77,23 @@ export const updateVisaValidationSchema = z.object({
     studentDocuments: studentDocumentsSchema.optional(),
     jobHolderDocuments: jobHolderDocumentsSchema.optional(),
     otherDocuments: otherDocumentsSchema.optional(),
+    }),
+    newTraveler: z.object({
+      givenName: z.string().min(1, 'Given name is required').optional(),
+    surname: z.string().min(1, 'Surname is required'),
+    phone: z.string().min(1, 'Phone number is required'),
+    email: z.string().email('Invalid email format'),
+    address: z.string().min(1, 'Address is required'),
+    notes: z.string().optional(),
+    visaType: z.enum(['business', 'student', 'jobHolder', 'other']).optional(),
+    generalDocuments: generalDocumentsSchema.optional(),
+    businessDocuments: businessDocumentsSchema.optional(),
+    studentDocuments: studentDocumentsSchema.optional(),
+    jobHolderDocuments: jobHolderDocumentsSchema.optional(),
+    otherDocuments: otherDocumentsSchema.optional(),
+    }).optional()
   })
 });
 
 
+ 

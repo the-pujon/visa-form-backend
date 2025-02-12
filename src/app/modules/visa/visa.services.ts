@@ -13,15 +13,7 @@ import {
   IStudentDocuments,
   IVisaForm
 } from "./visa.interface";
-import { v2 as cloudinary } from "cloudinary";
-import configs from "../../configs";
 import { cloudinaryDestroyOneByOne } from "../../utils/cloudinaryDelete";
-
-cloudinary.config({
-  cloud_name: configs.cloud_name,
-  api_key: configs.cloud_api_key,
-  api_secret: configs.cloud_api_secret,
-});
 
 /**
  * Creates a new visa application with uploaded documents
@@ -34,9 +26,6 @@ const createVisaApplication = async (visaData: IVisaForm, processedFiles: Proces
   if (!processedFiles || Object.keys(processedFiles).length === 0) {
     throw new AppError(httpStatus.BAD_REQUEST, 'No files were uploaded');
   }
-
-  // console.log(processedFiles);
-
   const uploadedFiles = await processAndUploadFiles(processedFiles, visaData.email);
   const visaApplicationData = prepareVisaApplicationData(visaData, uploadedFiles);
 
@@ -352,8 +341,6 @@ const updateVisaApplication = async (
     delete mongoUpdateObject.$unset;
   }
 
-  // console.log('MongoDB update object:', JSON.stringify(mongoUpdateObject, null, 2));
-
   // Update the visa application with explicit unset operations
   const result = await VisaModel.findByIdAndUpdate(
     id,
@@ -454,10 +441,6 @@ const updateSubTraveler = async (
     const subTraveler = visaApplication.subTravelers!.find(
       (st) => st._id?.toString() === subTravelerId
     );
-
-
-    console.log(subTraveler);
-    console.log(processedFiles)
 
     if (!subTraveler) {
       throw new AppError(httpStatus.NOT_FOUND, "Sub-traveler not found");
@@ -643,8 +626,6 @@ const updateSubTraveler = async (
       delete mongoUpdateObject.$unset;
     }
 
-    // console.log('MongoDB update object:', JSON.stringify(mongoUpdateObject, null, 2));
-
     // Update the sub-traveler with explicit unset operations
     const result = await VisaModel.findOneAndUpdate(
       { _id: visaApplication._id, 'subTravelers._id': subTraveler._id },
@@ -671,7 +652,6 @@ const getSubTravelerById = async (visaId: string, subTravelerId: string) => {
   try {
     const result = await VisaModel.findOne(
       { _id: visaId, 'subTravelers._id': subTravelerId },
-
       {
         'subTravelers.$': 1
       }
@@ -772,8 +752,6 @@ const updatePrimaryTraveler = async (
           }
         }
       
-       
-
         // Update document data based on new visa type
         if (updateData.visaType && updateData.visaType !== visaApplication.visaType) {
           switch (updateData.visaType) {
@@ -811,21 +789,15 @@ const updatePrimaryTraveler = async (
         }
 
         // Process uploaded files based on current visa type
-        // console.log("key", key)
         const value = newUploadedFiles[key];
         if (value) {
-          // console.log("value", value)
           updateDocumentField(documentKey, value, finalUpdateData, visaApplication);
         }
-        // console.log("finalUpdateData", finalUpdateData)
       }
       else if(key.includes('subTraveler_new')){
         const parts = key.split('_');
         const subTravelerId = parts[1];
         const lastDocKey = parts.slice(2).join('_');
-
-        // console.log("lastDocKey", lastDocKey)
-        // console.log("subTravelerId", subTravelerId)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newSubTraveler = newTraveler?.find((subTraveler: any) => subTraveler.id.toString() === subTravelerId);
 
@@ -869,38 +841,26 @@ const updatePrimaryTraveler = async (
           const { id, ...newSubTravelerWithoutId } = newSubTraveler;
           newSubTravelerArray.push(newSubTravelerWithoutId);
         }
-
-      
-
-        // console.log("newSubTraveler", newSubTraveler)
       }
       else if (key.includes('subTraveler_')) {
-        // Extract subTravelerId and documentKey from the format: subTraveler_[id]_[documentKey]
         const parts = key.split('_');
         const subTravelerId = parts[1];
         const lastDocKey = parts.slice(2).join('_');
-
-        // console.log("test", )
-        // console.log(visaApplication.subTravelers)
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const subTraveler = visaApplication.subTravelers?.find((subTraveler: any) => subTraveler._id.toString() === subTravelerId);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updatedSubTraveler = finalUpdateData.subTravelers?.find((subTraveler: any) => subTraveler._id.toString() === subTravelerId);
 
-
-        // console.log("subTraveler", subTraveler);
         if (!subTraveler && !updatedSubTraveler) {
           throw new AppError(httpStatus.NOT_FOUND, 'Sub-traveler not found');
         }
-
 
         const existingSubTraveler = {
           ...updatedSubTraveler,
           generalDocuments: updatedSubTraveler?.generalDocuments || { ...subTraveler?.generalDocuments },
         }
 
-        // console.log("existingSubTraveler", existingSubTraveler);
         if (existingSubTraveler.visaType) {
           if (existingSubTraveler.visaType !== subTraveler!.visaType) {
             switch (subTraveler!.visaType) {
@@ -920,8 +880,6 @@ const updatePrimaryTraveler = async (
           }
         }
       
-
-
         if (existingSubTraveler!.visaType && existingSubTraveler!.visaType !== subTraveler!.visaType) {
           switch (updatedSubTraveler!.visaType) {
             case 'student':
@@ -950,16 +908,12 @@ const updatePrimaryTraveler = async (
               break;
           }
         } else {
-          // console.log(visaApplication)
           // Keep existing document data if visa type hasn't changed
           existingSubTraveler!.studentDocuments = visaApplication.studentDocuments?  visaApplication.studentDocuments : undefined;
           existingSubTraveler!.jobHolderDocuments = visaApplication.jobHolderDocuments? visaApplication.jobHolderDocuments : undefined;
           existingSubTraveler!.businessDocuments = visaApplication.businessDocuments? visaApplication.businessDocuments : undefined;
           existingSubTraveler!.otherDocuments = visaApplication.otherDocuments? visaApplication.otherDocuments : undefined;
         }
-
-        // console.log("subTraveler", subTraveler);
-
         let existingFile: IFile | undefined;
 
         if (lastDocKey in (existingSubTraveler!.generalDocuments || {})) {
@@ -982,7 +936,6 @@ const updatePrimaryTraveler = async (
             console.error(`Failed to delete file ${existingFile.id} from Cloudinary:`, error);
           }
         }
-// console.log("key", key)
         // Use the already uploaded file
         const value = newUploadedFiles[key];
         if (value) {
@@ -1008,9 +961,7 @@ const updatePrimaryTraveler = async (
       }
     }
 
-
     if (oldSubTravelerVisaTypeDoc) {
-      // const oldVisaTypeDocPlain = oldVisaTypeDoc;
       for (const [key, value] of Object.entries(oldSubTravelerVisaTypeDoc)) {
   
         if (key !== '_id') {
@@ -1019,14 +970,9 @@ const updatePrimaryTraveler = async (
         }
       }
     }
-
   }
 
   // Update finalUpdateData with newSubTravelerArray only once, after the loop
-  // if (newSubTravelerArray.length > 0) {
-  //   finalUpdateData.subTravelers = newSubTravelerArray;
-  // }
-
   if (newSubTravelerArray.length > 0) {
     // Get existing sub-travelers that are not being updated
     const existingSubTravelers = finalUpdateData.subTravelers.filter(
@@ -1036,17 +982,11 @@ const updatePrimaryTraveler = async (
     // Combine existing and new sub-travelers
     finalUpdateData.subTravelers = [...existingSubTravelers, ...newSubTravelerArray];
   }
-
-  // console.log(newSubTravelerArray)
-// console.log(finalUpdateData.subTravelers)
-
-
   const result = await VisaModel.findOneAndReplace({_id: visaId}, finalUpdateData, {
     new: true
   });
 
   return result;
-  // return null
 };
 
 export const VisaServices = {

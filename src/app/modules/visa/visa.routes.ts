@@ -149,15 +149,19 @@ router.put(
   (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
       if (typeof req.body.data === 'string') {
-        console.log(req.body.newTraveler)
-        req.body = JSON.parse(req.body.data);
-        req.newTraveler = JSON.parse(req.body.newTraveler);
+        const data = JSON.parse(req.body.data);
+        let newTraveler = undefined;
+
+        if (req.body.newTraveler && typeof req.body.newTraveler === 'string') {
+          newTraveler = JSON.parse(req.body.newTraveler);
+        }
+
+        req.body = {
+          data,
+          newTraveler,
+        };
       }
-      // if(typeof req.body.newTraveler === 'string'){
-      //   req.body.newTraveler = JSON.parse(req.body.newTraveler);
-      // }
-      // console.log(req.newTraveler)
-      // next();
+      next();
     } catch (error) {
       next(error);
     }
@@ -165,5 +169,6 @@ router.put(
   validateRequest(updateVisaValidationSchema),
   VisaController.updatePrimaryTraveler
 );
+
 
 export const visaRoutes = router;

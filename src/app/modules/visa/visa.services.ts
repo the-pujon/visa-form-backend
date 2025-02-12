@@ -693,6 +693,7 @@ const getSubTravelerById = async (visaId: string, subTravelerId: string) => {
 const updatePrimaryTraveler = async (
   visaId: string,
   updateData: Partial<IVisaForm>,
+  newTraveler: Partial<IVisaForm>[],
   processedFiles?: ProcessedFiles
 ): Promise<IVisaForm | null> => {
 
@@ -708,12 +709,12 @@ const updatePrimaryTraveler = async (
   const finalUpdateData = {
     ...updateData,
     generalDocuments: updateData.generalDocuments || { ...visaApplication.generalDocuments?.toObject() },
-    // businessDocuments: updateData.businessDocuments || { ...visaApplication.businessDocuments?.toObject() },
-    // studentDocuments: updateData.studentDocuments || { ...visaApplication.studentDocuments?.toObject() },
-    // jobHolderDocuments: updateData.jobHolderDocuments || { ...visaApplication.jobHolderDocuments?.toObject() },
-    // otherDocuments: updateData.otherDocuments || { ...visaApplication.otherDocuments?.toObject() },
     subTravelers: updateData.subTravelers || (visaApplication.subTravelers ? [...visaApplication.subTravelers] : [])
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const newSubTravelerArray: any[] = []
+  const processedSubTravelerIds = new Set<string>();
 
   // Handle file updates if any
   if (processedFiles && Object.keys(processedFiles).length > 0) {
@@ -817,6 +818,61 @@ const updatePrimaryTraveler = async (
           updateDocumentField(documentKey, value, finalUpdateData, visaApplication);
         }
         // console.log("finalUpdateData", finalUpdateData)
+      }
+      else if(key.includes('subTraveler_new')){
+        const parts = key.split('_');
+        const subTravelerId = parts[1];
+        const lastDocKey = parts.slice(2).join('_');
+
+        // console.log("lastDocKey", lastDocKey)
+        // console.log("subTravelerId", subTravelerId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newSubTraveler = newTraveler?.find((subTraveler: any) => subTraveler.id.toString() === subTravelerId);
+
+        const value = newUploadedFiles[key];
+        if (value) {
+          updateDocumentField(lastDocKey, value, newSubTraveler as Partial<IVisaForm>, newSubTraveler as IVisaForm);
+        }
+
+        if (newSubTraveler && !processedSubTravelerIds.has(subTravelerId)) {
+          processedSubTravelerIds.add(subTravelerId);
+          
+          switch (newSubTraveler.visaType) {
+            case 'student':
+              newSubTraveler.studentDocuments = newSubTraveler.studentDocuments || {} as IStudentDocuments;
+              newSubTraveler.jobHolderDocuments = undefined;
+              newSubTraveler.businessDocuments = undefined;
+              newSubTraveler.otherDocuments = undefined;
+              break;
+            case 'jobHolder':
+              newSubTraveler.studentDocuments = undefined;
+              newSubTraveler.jobHolderDocuments = newSubTraveler.jobHolderDocuments || {} as IJobHolderDocuments;
+              newSubTraveler.businessDocuments = undefined;
+              newSubTraveler.otherDocuments = undefined;
+              break;
+            case 'business':
+              newSubTraveler.studentDocuments = undefined;
+              newSubTraveler.jobHolderDocuments = undefined;
+              newSubTraveler.businessDocuments = newSubTraveler.businessDocuments || {} as IBusinessDocuments;
+              newSubTraveler.otherDocuments = undefined;
+              break;
+            case 'other':
+              newSubTraveler.studentDocuments = undefined;
+              newSubTraveler.jobHolderDocuments = undefined;
+              newSubTraveler.businessDocuments = undefined;
+              newSubTraveler.otherDocuments = newSubTraveler.otherDocuments || {} as IOtherDocuments;
+              break;
+          }
+
+          // Create a copy without the ID before pushing
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...newSubTravelerWithoutId } = newSubTraveler;
+          newSubTravelerArray.push(newSubTravelerWithoutId);
+        }
+
+      
+
+        // console.log("newSubTraveler", newSubTraveler)
       }
       else if (key.includes('subTraveler_')) {
         // Extract subTravelerId and documentKey from the format: subTraveler_[id]_[documentKey]
@@ -940,12 +996,6 @@ const updatePrimaryTraveler = async (
         );
       }
     }
-    // console.log("finalUpdateData subTravelers 0",finalUpdateData.subTravelers[0])
-    // console.log("finalUpdateData subTravelers 1",finalUpdateData?.subTravelers[1])
-
-    // Upload new files to cloudinary
-    // const uploadedFiles = await processAndUploadFiles(processedFiles, visaApplication.email);
-    // console.log(uploadedFiles)
 
     if (oldVisaTypeDoc) {
       const oldVisaTypeDocPlain = oldVisaTypeDoc.toObject();
@@ -971,7 +1021,24 @@ const updatePrimaryTraveler = async (
     }
 
   }
-// console.log(finalUpdateData.subTravelers[0])
+
+  // Update finalUpdateData with newSubTravelerArray only once, after the loop
+  // if (newSubTravelerArray.length > 0) {
+  //   finalUpdateData.subTravelers = newSubTravelerArray;
+  // }
+
+  if (newSubTravelerArray.length > 0) {
+    // Get existing sub-travelers that are not being updated
+    const existingSubTravelers = finalUpdateData.subTravelers.filter(
+      (traveler) => !processedSubTravelerIds.has(traveler.id?.toString() || '')
+    );
+  
+    // Combine existing and new sub-travelers
+    finalUpdateData.subTravelers = [...existingSubTravelers, ...newSubTravelerArray];
+  }
+
+  // console.log(newSubTravelerArray)
+// console.log(finalUpdateData.subTravelers)
 
 
   const result = await VisaModel.findOneAndReplace({_id: visaId}, finalUpdateData, {
@@ -979,6 +1046,7 @@ const updatePrimaryTraveler = async (
   });
 
   return result;
+  // return null
 };
 
 export const VisaServices = {

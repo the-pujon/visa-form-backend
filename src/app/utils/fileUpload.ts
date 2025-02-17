@@ -32,6 +32,9 @@ const processUploadedFiles = async (files: Express.Multer.File[]): Promise<Proce
   const processedFiles: ProcessedFile[] = [];
   const uploadFolder = path.join(process.cwd(), "uploads", "documents");
 
+  // console.log("files", files)
+  // console.log("Upload Folder:", uploadFolder);
+
   // Ensure upload folder exists
   if (!fs.existsSync(uploadFolder)) {
     fs.mkdirSync(uploadFolder, { recursive: true });

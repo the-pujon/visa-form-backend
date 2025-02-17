@@ -11,6 +11,8 @@ import { ProcessedFiles } from '../../interfaces/fileUpload';
 
 
 const createVisaApplication = catchAsync(async (req: Request & { processedFiles?: ProcessedFiles }, res: Response) => {
+  // console.log("here")
+  // console.log(req.processedFiles)
   const result = await VisaServices.createVisaApplication(req.body, req.processedFiles!);
 
   sendResponse(res, {

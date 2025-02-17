@@ -77,11 +77,13 @@ router.post(
       if (typeof req.body.data === 'string') {
         req.body = JSON.parse(req.body.data);
       }
+      // console.log("Parsed Request Body:", req.body);
       next();
     } catch (error) {
       next(error);
     }
   },
+  
   validateRequest(visaValidationSchema),
   VisaController.createVisaApplication
 );

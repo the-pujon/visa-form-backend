@@ -65,7 +65,7 @@ export const visaValidationSchema = z.object({
     address: z.string().min(1, "Address is required"),
     notes: z.string().optional(),
     visaType: z.enum(["business", "student", "jobHolder", "other"]).optional(),
-    generalDocuments: generalDocumentsSchema.optional(),
+    generalDocuments: generalDocumentsSchema,
     businessDocuments: businessDocumentsSchema.optional(),
     studentDocuments: studentDocumentsSchema.optional(),
     jobHolderDocuments: jobHolderDocumentsSchema.optional(),

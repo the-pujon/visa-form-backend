@@ -253,12 +253,8 @@ describe("api/visa", () => {
 
   //Delete api test for subTraveler by id
 
-
-
-
   describe("PUT /api/visa/:id update visa application by id", () => {
-   
-     it("should update visa application by id", async () => {
+    it("should update visa application by id", async () => {
       const testData = {
         _id: id,
         givenName: existingData.givenName,
@@ -300,16 +296,18 @@ describe("api/visa", () => {
     }, 30000);
 
     it("should add new subTraveler to visa application when new subTraveler is provided", async () => {
-      const newSubTraveler = [{
-        id: "new1",
-        givenName: "Jane",
-        surname: "Doe",
-        phone: "+0987654321",
-        email: "jane@example.com",
-        address: "456 Test Ave",
-        notes: "Sub traveler notes",
-        visaType: "other",
-      }];
+      const newSubTraveler = [
+        {
+          id: "new1",
+          givenName: "Jane",
+          surname: "Doe",
+          phone: "+0987654321",
+          email: "jane@example.com",
+          address: "456 Test Ave",
+          notes: "Sub traveler notes",
+          visaType: "other",
+        },
+      ];
 
       const testData = {
         _id: id,
@@ -363,7 +361,7 @@ describe("api/visa", () => {
     it("should return 400 when updating with invalid visa type", async () => {
       const invalidTestData = {
         ...existingData,
-        visaType: "invalid_type"
+        visaType: "invalid_type",
       };
 
       const response = await request(app)
@@ -371,18 +369,22 @@ describe("api/visa", () => {
         .field("data", JSON.stringify(invalidTestData))
         .attach("primaryTraveler_birthCertificate", mockFilePath);
 
-
-        console.log("should return 400 when updating with invalid visa type", response.body)
+      console.log(
+        "should return 400 when updating with invalid visa type",
+        response.body,
+      );
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("errorMessages");
-      expect(response.body.errorMessages[0].message).toContain("Invalid enum value. Expected 'business' | 'student' | 'jobHolder' | 'other', received 'invalid_type'");
+      expect(response.body.errorMessages[0].message).toContain(
+        "Invalid enum value. Expected 'business' | 'student' | 'jobHolder' | 'other', received 'invalid_type'",
+      );
     });
 
     it("should return 400 when updating with invalid email format", async () => {
       const invalidTestData = {
         ...existingData,
-        email: "invalid-email"
+        email: "invalid-email",
       };
 
       const response = await request(app)
@@ -392,16 +394,17 @@ describe("api/visa", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty("errorMessages");
-      expect(response.body.errorMessages[0].message).toContain("Invalid email format");
+      expect(response.body.errorMessages[0].message).toContain(
+        "Invalid email format",
+      );
     });
-
 
     it("should return 400 when required fields are missing", async () => {
       const invalidTestData = {
         _id: id,
         // Missing required fields like givenName and surname
         email: "john@example.com",
-        visaType: "student"
+        visaType: "student",
       };
 
       const response = await request(app)
@@ -409,7 +412,10 @@ describe("api/visa", () => {
         .field("data", JSON.stringify(invalidTestData))
         .attach("primaryTraveler_birthCertificate", mockFilePath);
 
-        console.log("should return 400 when required fields are missing", response.body)
+      console.log(
+        "should return 400 when required fields are missing",
+        response.body,
+      );
 
       expect(response.status).toBe(400);
 
@@ -418,15 +424,18 @@ describe("api/visa", () => {
       expect(response.body.errorMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            message: expect.stringContaining("Required")
-          })
-        ])
+            message: expect.stringContaining("Required"),
+          }),
+        ]),
       );
     });
 
     it("should return 400 when updating with invalid file type", async () => {
       // Create a temporary text file instead of PDF
-      const invalidFilePath = path.join(path.dirname(mockFilePath), "invalid.txt");
+      const invalidFilePath = path.join(
+        path.dirname(mockFilePath),
+        "invalid.txt",
+      );
       fs.writeFileSync(invalidFilePath, "This is not a PDF file");
 
       try {
@@ -437,7 +446,9 @@ describe("api/visa", () => {
 
         expect(response.status).toBe(400);
         expect(response.body).toHaveProperty("errorMessages");
-        expect(response.body.errorMessages[0].message).toContain("Invalid file type");
+        expect(response.body.errorMessages[0].message).toContain(
+          "Invalid file type",
+        );
       } finally {
         fs.unlinkSync(invalidFilePath);
       }
@@ -455,13 +466,16 @@ describe("api/visa", () => {
           .field("data", JSON.stringify(existingData))
           .attach("primaryTraveler_birthCertificate", largeFilePath);
 
-          console.log("should return 400 when file size exceeds limit", response.body)
-
-          
+        console.log(
+          "should return 400 when file size exceeds limit",
+          response.body,
+        );
 
         expect(response.status).toBe(400);
         expect(response.body).toHaveProperty("errorMessages");
-        expect(response.body.errorMessages[0].message).toContain("File too large");
+        expect(response.body.errorMessages[0].message).toContain(
+          "File too large",
+        );
       } finally {
         fs.unlinkSync(largeFilePath);
       }
@@ -485,15 +499,16 @@ describe("api/visa", () => {
         .field("data", "{invalid-json")
         .attach("primaryTraveler_birthCertificate", mockFilePath);
 
-        console.log("should return 400 when updating with malformed JSON data", response.body)
-
+      console.log(
+        "should return 400 when updating with malformed JSON data",
+        response.body,
+      );
 
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty("errorMessages");
       // expect(response.body.errorMessages[0].).toContain("Invalid JSON format");
     });
   });
-
 
   describe("DELETE /api/:visaId/sub-traveler/:subTravelerId delete subTraveler by id", () => {
     it("should delete subTraveler by id", async () => {
@@ -529,6 +544,4 @@ describe("api/visa", () => {
       expect(response.status).toBe(400);
     });
   });
-
-
 });

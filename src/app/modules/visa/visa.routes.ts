@@ -19,7 +19,7 @@ const getUploadFields = () => {
   const documentTypes = [
     // General Documents
     'passportCopy', 'passportPhoto', 'bankStatement', 'bankSolvency',
-    'visitingCard', 'hotelBooking', 'airTicket',
+    'visitingCard', 'hotelBooking', 'airTicket','previousVisa',
     // Business Documents
     'tradeLicense', 'notarizedId', 'memorandum', 'officePad',
     // Student Documents
@@ -28,7 +28,7 @@ const getUploadFields = () => {
     'nocCertificate', 'officialId', 'bmdcCertificate',
     'barCouncilCertificate', 'retirementCertificate',
     // Other Documents
-    'marriageCertificate'
+    'marriageCertificate','leaveLetter'
   ];
 
   // Add primary traveler fields
@@ -84,7 +84,7 @@ router.post(
     }
   },
   
-  validateRequest(visaValidationSchema),
+  // validateRequest(visaValidationSchema),
   VisaController.createVisaApplication
 );
 

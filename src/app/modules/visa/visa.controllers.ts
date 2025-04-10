@@ -12,14 +12,16 @@ import { ProcessedFiles } from '../../interfaces/fileUpload';
 
 const createVisaApplication = catchAsync(async (req: Request & { processedFiles?: ProcessedFiles }, res: Response) => {
   // console.log("here")
-  // console.log(req.processedFiles)
-  const result = await VisaServices.createVisaApplication(req.body, req.processedFiles!);
+  console.log(req.files)
+  console.log(req.files)
+  console.log(req.processedFiles)
+  // const result = await VisaServices.createVisaApplication(req.body, req.processedFiles!);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: "Visa application created successfully",
-    data: result,
+    data: null,
   });
 });
 
